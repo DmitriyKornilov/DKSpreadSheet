@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="5">
+    <PathDelim Value="\"/>
+    <Name Value="DKSpreadSheet"/>
+    <Type Value="RunAndDesignTime"/>
+    <Author Value="Dmitriy Kornilov"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <OtherUnitFiles Value="source"/>
+        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+      </SearchPaths>
+    </CompilerOptions>
+    <Version Major="1"/>
+    <Files>
+      <Item>
+        <Filename Value="source\dk_sheetconst.pas"/>
+        <UnitName Value="DK_SheetConst"/>
+      </Item>
+      <Item>
+        <Filename Value="source\dk_sheetexporter.pas"/>
+        <UnitName Value="DK_SheetExporter"/>
+      </Item>
+      <Item>
+        <Filename Value="source\dk_sheetwriter.pas"/>
+        <UnitName Value="DK_SheetWriter"/>
+      </Item>
+    </Files>
+    <RequiredPkgs>
+      <Item>
+        <PackageName Value="DKUtils"/>
+      </Item>
+      <Item>
+        <PackageName Value="laz_fpspreadsheet_visual"/>
+      </Item>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+      <UseFileFilters Value="True"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>
