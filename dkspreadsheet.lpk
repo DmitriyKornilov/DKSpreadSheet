@@ -27,6 +27,10 @@
         <Filename Value="source\dk_sheetwriter.pas"/>
         <UnitName Value="DK_SheetWriter"/>
       </Item>
+      <Item>
+        <Filename Value="source\dk_sheetutils.pas"/>
+        <UnitName Value="DK_SheetUtils"/>
+      </Item>
     </Files>
     <RequiredPkgs>
       <Item>
