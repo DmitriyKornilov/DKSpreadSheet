@@ -15,7 +15,7 @@ const
   TRANSPARENT_COLOR_INDEX = 0;
   //Font
   FONT_NAME_DEFAULT: String = 'Arial';
-  FONT_SIZE_DEFAULT: Single = 9;
+  FONT_SIZE_DEFAULT: Single = 8;
   FONT_SIZE_MINIMUM: Single = 6;
   FONT_STYLE_DEFAULT: TsFontStyles = [];
   FONT_COLOR_DEFAULT: TsColor = scBlack;
@@ -31,8 +31,10 @@ const
   BORDER_COLOR_DEFAULT: TsColor = scBlack;
   //RowHeight
   ROW_HEIGHT_DEFAULT = 21;
-
+  //Sheet
   MAX_SHEETNAME_LENGTH = 31;
+  //Grid
+  GRID_COLOR_DEFAULT: TsColor = scWhite;
 
 implementation
 
