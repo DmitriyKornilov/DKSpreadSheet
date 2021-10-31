@@ -19,6 +19,8 @@ uses
   function ColorSheetsToGraphics(const AColor: TsColor): TColor;
   function WidthPxToPt(const AValuePx: Integer): Single;
   function HeightPxToPt(const AValuePx: Integer): Single;
+  function AlignmentToSheetsHorAlignment(const AAlignment: TAlignment): TsHorAlignment;
+
 
 implementation
 
@@ -91,6 +93,22 @@ begin
     Result:= clNone
   else
     Result:= TColor(AColor);
+end;
+
+function AlignmentToSheetsHorAlignment(const AAlignment: TAlignment): TsHorAlignment;
+begin
+  case AAlignment of
+    taLeftJustify: Result:= haLeft;
+    taCenter: Result:= haCenter;
+    taRightJustify: Result:= haRight;
+  end;
+end;
+
+function ChooseColor(const AValue, ADefault: TColor): TColor;
+begin
+  Result:= AValue;
+  if Result=clNone then
+    Result:= ADefault;
 end;
 
 

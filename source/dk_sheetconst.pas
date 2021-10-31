@@ -18,7 +18,7 @@ const
   //RowHeight
   ROW_HEIGHT_DEFAULT = 21;
   //Color
-  //TRANSPARENT_COLOR_INDEX = 0;
+  TRANSPARENT_COLOR_INDEX = 0;
 
   {---SHEET PROPERTIES---}
   //Font
