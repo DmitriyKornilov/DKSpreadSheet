@@ -6,7 +6,8 @@ interface
 
 uses
   Classes, SysUtils, fpstypes, fpspreadsheet, fpspreadsheetgrid, Graphics,
-  DK_Const, DK_Vector, DK_Matrix, DK_TextUtils, DK_StrUtils, DK_SheetConst;
+  DK_Const, DK_Vector, DK_Matrix, DK_TextUtils, DK_StrUtils, DK_SheetConst,
+  DK_SheetUtils;
 
 type
 
@@ -196,46 +197,11 @@ type
     property ColCount: Integer read GetColCount;
   end;
 
-  function FontStyleFPSToGraphics(const AFontStyle: TsFontStyles): TFontStyles;
-  function FontStyleGraphicsToFPS(const AFontStyle: TFontStyles): TsFontStyles;
-  function ColorGraphicsToFPS(const AColor: TColor): TsColor;
-  function WidthPxToPt(const AValuePx: Integer): Single;
-  function HeightPxToPt(const AValuePx: Integer): Single;
+
 
 implementation
 
-function WidthPxToPt(const AValuePx: Integer): Single;
-begin
-  WidthPxToPt:= AValuePx/WIDTH_PX_RATIO;
-end;
 
-function HeightPxToPt(const AValuePx: Integer): Single;
-begin
-  HeightPxToPt:= AValuePx/HEIGHT_PX_RATIO;
-end;
-
-function FontStyleFPSToGraphics(const AFontStyle: TsFontStyles): TFontStyles;
-begin
-  Result:= [];
-  if fssBold in AFontStyle then Result:= Result + [fsBold];
-  if fssItalic in AFontStyle then Result:= Result + [fsItalic];
-  if fssStrikeOut in AFontStyle then Result:= Result + [fsStrikeOut];
-  if fssUnderline in AFontStyle then Result:= Result + [fsUnderline];
-end;
-
-function FontStyleGraphicsToFPS(const AFontStyle: TFontStyles): TsFontStyles;
-begin
-  Result:= [];
-  if fsBold in AFontStyle then Result:= Result + [fssBold];
-  if fsItalic in AFontStyle then Result:= Result + [fssItalic];
-  if fsStrikeOut in AFontStyle then Result:= Result + [fssStrikeOut];
-  if fsUnderline in AFontStyle then Result:= Result + [fssUnderline];
-end;
-
-function ColorGraphicsToFPS(const AColor: TColor): TsColor;
-begin
-  Result:= ColorToRGB(AColor);
-end;
 
 { TSheetWriter }
 
@@ -318,7 +284,7 @@ begin
     if FBGColorMatrix[i,2] = TRANSPARENT_COLOR_INDEX then
       Cl:= scTransparent
     else
-      Cl:= ColorGraphicsToFPS(ABGColors[FBGColorMatrix[i,2]]);
+      Cl:= ColorGraphicsToSheets(ABGColors[FBGColorMatrix[i,2]]);
     FWorksheet.WriteBackground(R, C, fsSolidFill, Cl, Cl);
   end;
 end;
@@ -705,7 +671,7 @@ begin
   Font:= TFont.Create;
   Font.Name:= FFontName;
   Font.Size:= Round(FFontSize);
-  Font.Style:= FontStyleFPSToGraphics(FFontStyle);
+  Font.Style:= FontStyleSheetsToGraphics(FFontStyle);
   Result:= TextToCell(AText, Font, CellWidth, ARedStrWidth, AWrapToWordParts, BreakSymbol);
   FreeAndNil(Font);
 end;
@@ -985,11 +951,11 @@ end;
 
 procedure TSheetWriter.SetBordersColor(const ALeftColor,ARightColor,ATopColor,ABottomColor,AInnerColor: TColor);
 begin
-  SetBordersColor(ColorGraphicsToFPS(ALeftColor),
-                  ColorGraphicsToFPS(ARightColor),
-                  ColorGraphicsToFPS(ATopColor),
-                  ColorGraphicsToFPS(ABottomColor),
-                  ColorGraphicsToFPS(AInnerColor));
+  SetBordersColor(ColorGraphicsToSheets(ALeftColor),
+                  ColorGraphicsToSheets(ARightColor),
+                  ColorGraphicsToSheets(ATopColor),
+                  ColorGraphicsToSheets(ABottomColor),
+                  ColorGraphicsToSheets(AInnerColor));
 end;
 
 procedure TSheetWriter.SetBordersColor(const AAllColor: TColor);
@@ -1026,7 +992,7 @@ end;
 
 procedure TSheetWriter.SetBorders(const AAllStyle: TsLineStyle; const AAllColor: TColor);
 begin
-  SetBorders(AAllStyle, ColorGraphicsToFPS(AAllColor));
+  SetBorders(AAllStyle, ColorGraphicsToSheets(AAllColor));
 end;
 
 procedure TSheetWriter.SetBorders(const AOuterStyle: TsLineStyle; const AOuterColor: TColor;
@@ -1034,8 +1000,8 @@ procedure TSheetWriter.SetBorders(const AOuterStyle: TsLineStyle; const AOuterCo
 var
   OuterColor, InnerColor: TsColor;
 begin
-  OuterColor:= ColorGraphicsToFPS(AOuterColor);
-  InnerColor:= ColorGraphicsToFPS(AInnerColor);
+  OuterColor:= ColorGraphicsToSheets(AOuterColor);
+  InnerColor:= ColorGraphicsToSheets(AInnerColor);
   SetBorders(AOuterStyle, OuterColor, AInnerStyle, InnerColor);
 end;
 
@@ -1077,8 +1043,8 @@ end;
 procedure TSheetWriter.SetBackground(const ABGStyle: TsFillStyle; const ABGColor: TColor;
   const APatternColor: TColor);
 begin
-  SetBackground(ABGStyle, ColorGraphicsToFPS(ABGColor),
-                ColorGraphicsToFPS(APatternColor));
+  SetBackground(ABGStyle, ColorGraphicsToSheets(ABGColor),
+                ColorGraphicsToSheets(APatternColor));
 end;
 
 procedure TSheetWriter.SetBackground(const ABGColor: TsColor);
@@ -1119,8 +1085,8 @@ procedure TSheetWriter.SetFont(const AName: String; const ASize: Single; const A
 begin
   SetFontName(AName);
   FFontSize:= ASize;
-  FFontStyle:= FontStyleGraphicsToFPS(AStyle);
-  FFontColor:= ColorGraphicsToFPS(AColor);
+  FFontStyle:= FontStyleGraphicsToSheets(AStyle);
+  FFontColor:= ColorGraphicsToSheets(AColor);
 end;
 
 procedure TSheetWriter.SetFont(const AFont: TFont);
