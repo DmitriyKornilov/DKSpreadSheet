@@ -20,7 +20,7 @@ uses
   function WidthPxToPt(const AValuePx: Integer): Single;
   function HeightPxToPt(const AValuePx: Integer): Single;
   function AlignmentToSheetsHorAlignment(const AAlignment: TAlignment): TsHorAlignment;
-
+  function ChooseColor(const AValue, ADefault: TColor): TColor;
 
 implementation
 
