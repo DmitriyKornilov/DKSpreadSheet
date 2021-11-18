@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, DK_Dialogs, DK_StrUtils, DK_SheetConst, Dialogs,
-  fpstypes, fpspreadsheet;
+  fpstypes, fpspreadsheet, fpsallformats;
 
 type
 

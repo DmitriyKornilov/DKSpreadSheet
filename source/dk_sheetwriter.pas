@@ -393,12 +393,12 @@ begin
   FColWidths[ACol]:= AValue;
   if HasGrid then
     FGrid.ColWidths[ACol]:= AValue;
-  FWorksheet.WriteColWidth(ACol, WidthPxToPt(AValue), {suPoints}suChars);
+  FWorksheet.WriteColWidth(ACol, WidthPxToPt(AValue), suChars);
 end;
 
 procedure TSheetWriter.SetHeight(const ARow, AValue: Integer);
 begin
-  FWorksheet.WriteRowHeight(ARow, HeightPxToPt(AValue), {suPoints}suLines);
+  FWorksheet.WriteRowHeight(ARow, HeightPxToPt(AValue), suLines);
   FRowHeights[ARow]:= AValue;
   if HasGrid then
     FGrid.RowHeights[ARow]:= AValue;
