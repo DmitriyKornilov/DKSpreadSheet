@@ -16,7 +16,7 @@ const
   ALIGN_HOR_DEFAULT:  TsHorAlignment  = haCenter;
   ALIGN_VERT_DEFAULT: TsVertAlignment = vaCenter;
   //RowHeight
-  ROW_HEIGHT_DEFAULT = 21;
+  ROW_HEIGHT_DEFAULT = 25;
   //Color
   TRANSPARENT_COLOR_INDEX = 0;
 
