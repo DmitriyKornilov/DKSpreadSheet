@@ -471,8 +471,8 @@ begin
       AFixRowCount:= AFixRowCount + 1;
     if FGrid.RowCount>=AFixRowCount then
       FGrid.FrozenRows:= AFixRowCount;
-  end
-  else
+  end;
+  //else
     FWorkSheet.TopPaneHeight:= AFixRowCount;
 end;
 
@@ -498,8 +498,8 @@ begin
       AFixColCount:= AFixColCount + 1;
     if FGrid.ColCount>= AFixColCount then
       FGrid.FrozenCols:= AFixColCount;  //На гридах глюки с отображением - использовать только для экспорта
-  end
-  else
+  end;
+  //else
     FWorkSheet.LeftPaneWidth:= AFixColCount;
 end;
 
