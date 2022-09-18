@@ -5,7 +5,7 @@ unit DK_SheetWriter;
 interface
 
 uses
-  Classes, SysUtils, fpstypes, fpspreadsheet, fpspreadsheetgrid, Graphics,
+  Classes, SysUtils, Grids, fpstypes, fpspreadsheet, fpspreadsheetgrid, Graphics,
   DK_Const, DK_Vector, DK_Matrix, DK_TextUtils, DK_StrUtils, DK_SheetConst,
   DK_SheetUtils;
 
@@ -85,6 +85,8 @@ type
                            const ARedStrWidth: Integer = 0): Integer;
     procedure SetGridRowCount(const ACount: Integer);
     procedure SetGridColCount(const ACount: Integer);
+
+    procedure SetDefaultGridSettings;
   public
     constructor Create(const AColWidths: TIntVector; const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid = nil);
     destructor  Destroy; override;
@@ -226,11 +228,11 @@ end;
 
 procedure TSheetWriter.EndEdit;
 begin
-  if HasGrid then FGrid.AutoExpand:= [];
   SetRows;
   SetColumns;
   if HasGrid then
   begin
+    FGrid.AutoExpand:= [];
     FGrid.LeftCol:= 0;
     FGrid.TopRow:= 0;
     FGrid.Visible:= True;
@@ -318,6 +320,7 @@ begin
     VAppend(FColWidths, 0);
   end;
   Clear;
+  SetDefaultGridSettings;
   SetColumns;
   SetDefaultCellSettings;
 end;
@@ -689,6 +692,15 @@ begin
   if FGrid.FrozenCols>ACount then
     SetFrozenCols(0);
   FGrid.ColCount:= ACount;
+end;
+
+procedure TSheetWriter.SetDefaultGridSettings;
+begin
+  if not HasGrid then Exit;
+  FGrid.MouseWheelOption:= mwGrid;
+  FGrid.ShowGridLines:= False;
+  FGrid.ShowHeaders:= False;
+  FGrid.SelectionPen.Style:= psClear;
 end;
 
 procedure TSheetWriter.SetCellMainSettings(const ARow, ACol: Integer; const AWordWrap: Boolean);
