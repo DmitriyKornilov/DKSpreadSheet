@@ -53,6 +53,7 @@ type
     function GetHasGrid: Boolean;
     function GetRowCount: Integer;
     function GetColCount: Integer;
+    function GetRowHeight(const ARow: Integer): Integer;
     function ColIndex(const ACol: Integer): Integer;
     function RowIndex(const ARow: Integer): Integer;
     procedure CellIndex(var ARow, ACol: Integer);
@@ -197,6 +198,7 @@ type
     property HasGrid: Boolean read GetHasGrid;
     property RowCount: Integer read GetRowCount;
     property ColCount: Integer read GetColCount;
+    property RowHeight[const ARow: Integer]: Integer read GetRowHeight;
   end;
 
 
@@ -350,6 +352,11 @@ end;
 function TSheetWriter.GetColCount: Integer;
 begin
   Result:= Length(FColWidths) - 2*Ord(HasGrid);
+end;
+
+function TSheetWriter.GetRowHeight(const ARow: Integer): Integer;
+begin
+  Result:= FRowHeights[RowIndex(ARow)];
 end;
 
 function TSheetWriter.GetRowCount: Integer;
