@@ -155,6 +155,18 @@ type
                         const AWrapToWordParts: Boolean = False;
                         const ARedStrWidth: Integer = 0;
                         const ARichTextParams: TsRichTextParams = nil);
+    procedure WriteTextVertical(const ARow, ACol: Integer; const AValue: String;
+                        const ABordersType: TCellBorderType = cbtNone;
+                        const AWordWrap: Boolean = True;
+                        const AWrapToWordParts: Boolean = False;
+                        const ARedStrWidth: Integer = 0;
+                        const ARichTextParams: TsRichTextParams = nil);
+    procedure WriteTextVertical(ARow1, ACol1, ARow2, ACol2: Integer; AValue: String;
+                        const ABordersType: TCellBorderType = cbtNone;
+                        const AWordWrap: Boolean = True;
+                        const AWrapToWordParts: Boolean = False;
+                        const ARedStrWidth: Integer = 0;
+                        const ARichTextParams: TsRichTextParams = nil);
     procedure WriteNumber(const ARow, ACol: Integer; const AValue: Double;
                           const ABordersType: TCellBorderType = cbtNone;
                           const AFormatString: String = '');
@@ -513,6 +525,18 @@ begin
     FWorkSheet.LeftPaneWidth:= AFixColCount;
 end;
 
+procedure TSheetWriter.WriteText(const ARow, ACol: Integer; const AValue: String;
+                        const ABordersType: TCellBorderType = cbtNone;
+                        const AWordWrap: Boolean = True;
+                        const AAutoHeight: Boolean = False;
+                        const AWrapToWordParts: Boolean = False;
+                        const ARedStrWidth: Integer = 0;
+                        const ARichTextParams: TsRichTextParams = nil);
+begin
+  WriteText(ARow, ACol, ARow, ACol, AValue, ABordersType, AWordWrap, AAutoHeight,
+            AWrapToWordParts, ARedStrWidth, ARichTextParams);
+end;
+
 procedure TSheetWriter.WriteText(ARow1, ACol1, ARow2, ACol2: Integer; AValue: String;
                         const ABordersType: TCellBorderType = cbtNone;
                         const AWordWrap: Boolean = True;
@@ -538,17 +562,31 @@ begin
   end;
 end;
 
-procedure TSheetWriter.WriteText(const ARow, ACol: Integer; const AValue: String;
-                        const ABordersType: TCellBorderType = cbtNone;
-                        const AWordWrap: Boolean = True;
-                        const AAutoHeight: Boolean = False;
-                        const AWrapToWordParts: Boolean = False;
-                        const ARedStrWidth: Integer = 0;
-                        const ARichTextParams: TsRichTextParams = nil);
+procedure TSheetWriter.WriteTextVertical(const ARow, ACol: Integer;
+  const AValue: String; const ABordersType: TCellBorderType;
+  const AWordWrap: Boolean;
+  const AWrapToWordParts: Boolean; const ARedStrWidth: Integer;
+  const ARichTextParams: TsRichTextParams);
 begin
-  WriteText(ARow, ACol, ARow, ACol, AValue, ABordersType, AWordWrap, AAutoHeight,
+  WriteTextVertical(ARow, ACol, ARow, ACol, AValue, ABordersType, AWordWrap,
             AWrapToWordParts, ARedStrWidth, ARichTextParams);
 end;
+
+procedure TSheetWriter.WriteTextVertical(ARow1, ACol1, ARow2, ACol2: Integer;
+  AValue: String; const ABordersType: TCellBorderType;
+  const AWordWrap: Boolean;
+  const AWrapToWordParts: Boolean; const ARedStrWidth: Integer;
+  const ARichTextParams: TsRichTextParams);
+begin
+  SetCellSettings(ARow1, ACol1, ARow2, ACol2, ROW_HEIGHT_DEFAULT, AWordWrap, ABordersType);
+  FWorksheet.WriteTextRotation(ARow1, ACol1, rt90DegreeCounterClockwiseRotation);
+  if AValue=EmptyStr then
+    FWorksheet.WriteBlank(ARow1, ACol1)
+  else
+    FWorksheet.WriteText(ARow1, ACol1, AValue, ARichTextParams);
+end;
+
+
 
 procedure TSheetWriter.WriteNumber(const ARow, ACol: Integer; const AValue: Double;
                             const ABordersType: TCellBorderType = cbtNone;
