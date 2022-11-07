@@ -127,7 +127,7 @@ var
 begin
   Result:= False;
   SD:= TSaveDialog.Create(nil);
-  SD.FileName:= TextToFileName(AFileName);
+  SD.FileName:= AFileName;
   SD.Filter:= 'Электронная таблица (*.xlsx)|*.xlsx|Электронная таблица (*.ods)|*.ods';
   SD.Title:= 'Сохранить как';
   Result:= SD.Execute;
@@ -150,7 +150,7 @@ procedure SaveToFormat(const AWorkbook: TsWorkbook;
 var
   FileName: String;
 begin
-  FileName:=  TextToFileName(AFileName);
+  FileName:=  AFileName;
   if not AOverwriteExistingFile then
     if FileExists(FileName) then
       if not Confirm('Файл "' + FileName +
@@ -167,7 +167,7 @@ var
   FileFormat: TsSpreadsheetFormat;
   FileName: String;
 begin
-  FileName:=  TextToFileName(ADefaultFileName);
+  FileName:=  ADefaultFileName;
   if not OpenSaveDialog(FileName, FileFormat) then Exit;
   SaveToFormat(AWorkbook, FileFormat, ADoneMessage,
                FileName, AOverwriteExistingFile);
