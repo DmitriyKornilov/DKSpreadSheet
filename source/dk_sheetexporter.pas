@@ -86,6 +86,7 @@ type
     end;
 
   function TextToSheetName(const AText: String): String;
+  function TextToFileName(const AText: String): String;
 
 implementation
 
@@ -100,13 +101,33 @@ begin
     StringReplace(Result, INVALID_CHARS[i], '-', [rfReplaceAll]);
 end;
 
+function TextToFileName(const AText: String): String;
+const
+  INVALID_CHARS: array [0..8] of String = ('"', '*', '|', '\', ':', '<', '>', '?', '/');
+var
+  i, k: Integer;
+begin
+  Result:= AText;
+  //for i:=0 to High(INVALID_CHARS) do
+  //  StringReplace(Result, INVALID_CHARS[i], '', [rfReplaceAll]);
+  for i:=0 to High(INVALID_CHARS) do
+  begin
+    k:= SPos(Result, INVALID_CHARS[i]);
+    while k>0 do
+    begin
+      Result:= SDel(Result, k, k);
+      k:= SPos(Result, INVALID_CHARS[i]);
+    end;
+  end;
+end;
+
 function OpenSaveDialog(var AFileName: String; out AFormat: TsSpreadsheetFormat): Boolean;
 var
   SD: TSaveDialog;
 begin
   Result:= False;
   SD:= TSaveDialog.Create(nil);
-  SD.FileName:= AFileName;
+  SD.FileName:= TextToFileName(AFileName);
   SD.Filter:= 'Электронная таблица (*.xlsx)|*.xlsx|Электронная таблица (*.ods)|*.ods';
   SD.Title:= 'Сохранить как';
   Result:= SD.Execute;
@@ -126,12 +147,15 @@ procedure SaveToFormat(const AWorkbook: TsWorkbook;
                        const ADoneMessage: String = '';
                        const AFileName: String = '';
                        const AOverwriteExistingFile: Boolean = False);
+var
+  FileName: String;
 begin
+  FileName:=  TextToFileName(AFileName);
   if not AOverwriteExistingFile then
-    if FileExists(AFileName) then
-      if not Confirm('Файл "' + AFileName +
+    if FileExists(FileName) then
+      if not Confirm('Файл "' + FileName +
                      '" уже существует! Перезаписать файл?') then Exit;
-  AWorkbook.WriteToFile(AFileName, AFormat, True);
+  AWorkbook.WriteToFile(FileName, AFormat, True);
   if ADoneMessage<>EmptyStr then ShowInfo(ADoneMessage);
 end;
 
@@ -143,7 +167,7 @@ var
   FileFormat: TsSpreadsheetFormat;
   FileName: String;
 begin
-  FileName:=  ADefaultFileName;
+  FileName:=  TextToFileName(ADefaultFileName);
   if not OpenSaveDialog(FileName, FileFormat) then Exit;
   SaveToFormat(AWorkbook, FileFormat, ADoneMessage,
                FileName, AOverwriteExistingFile);
