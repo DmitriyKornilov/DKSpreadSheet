@@ -140,6 +140,10 @@ type
     //Repeated
     procedure SetRepeatedRows(ABeginRow, AEndRow: Integer);
     procedure SetRepeatedCols(ABeginCol, AEndCol: Integer);
+    //Image
+    procedure WriteImage(ARow, ACol: Integer; AFileName: String;
+                         AOffsetX: Double= 0.0; AOffsetY: Double=0.0;
+                         AScaleX: Double=1.0; AScaleY: Double=1.0);
     //WriteCellValue
     procedure WriteText(const ARow, ACol: Integer; const AValue: String;
                         const ABordersType: TCellBorderType = cbtNone;
@@ -472,7 +476,8 @@ begin
     SetGridColCount(Length(FColWidths)+1);  ///!
   for i:= 0 to High(FColWidths) do
     SetWidth(i, FColWidths[i]);
-  SetGridColCount(Length(FColWidths));
+  if HasGrid then
+    SetGridColCount(Length(FColWidths));
 end;
 
 procedure TSheetWriter.SetRows;
@@ -523,6 +528,14 @@ begin
   end;
   //else
     FWorkSheet.LeftPaneWidth:= AFixColCount;
+end;
+
+procedure TSheetWriter.WriteImage(ARow, ACol: Integer; AFileName: String;
+      AOffsetX: Double = 0.0; AOffsetY: Double = 0.0;
+      AScaleX: Double = 1.0; AScaleY: Double = 1.0);
+begin
+  CellIndex(ARow, ACol);
+  FWorksheet.WriteImage(ARow, ACol, AFileName, AOffsetX, AOffsetY, AScaleX, AScaleY);
 end;
 
 procedure TSheetWriter.WriteText(const ARow, ACol: Integer; const AValue: String;
@@ -578,6 +591,7 @@ procedure TSheetWriter.WriteTextVertical(ARow1, ACol1, ARow2, ACol2: Integer;
   const AWrapToWordParts: Boolean; const ARedStrWidth: Integer;
   const ARichTextParams: TsRichTextParams);
 begin
+  CellIndex(ARow1, ACol1, ARow2, ACol2);
   SetCellSettings(ARow1, ACol1, ARow2, ACol2, ROW_HEIGHT_DEFAULT, AWordWrap, ABordersType);
   FWorksheet.WriteTextRotation(ARow1, ACol1, rt90DegreeCounterClockwiseRotation);
   if AValue=EmptyStr then
