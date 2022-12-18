@@ -336,6 +336,7 @@ begin
     FFirstRow:= 1;
     VIns(FColWidths, 0, 1);
     VAppend(FColWidths, 0);
+    FGrid.FrozenBorderPen.Style:= psClear;
   end;
   Clear;
   SetDefaultGridSettings;
