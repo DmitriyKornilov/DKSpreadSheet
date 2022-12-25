@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Grids, fpstypes, fpspreadsheet, fpspreadsheetgrid, Graphics,
   DK_Const, DK_Vector, DK_Matrix, DK_TextUtils, DK_StrUtils, DK_SheetConst,
-  DK_SheetUtils;
+  DK_SheetUtils, Forms;
 
 type
 
@@ -419,16 +419,16 @@ procedure TSheetWriter.SetWidth(const ACol, AValue: Integer);
 begin
   FColWidths[ACol]:= AValue;
   if HasGrid then
-    FGrid.ColWidths[ACol]:= AValue;
-  FWorksheet.WriteColWidth(ACol, WidthPxToPt(AValue), suChars);
+    FGrid.ColWidths[ACol]:= FColWidths[ACol];
+  FWorksheet.WriteColWidth(ACol, WidthPxToPt(FColWidths[ACol]), suChars);
 end;
 
 procedure TSheetWriter.SetHeight(const ARow, AValue: Integer);
 begin
-  FWorksheet.WriteRowHeight(ARow, HeightPxToPt(AValue), suLines);
   FRowHeights[ARow]:= AValue;
   if HasGrid then
-    FGrid.RowHeights[ARow]:= AValue;
+    FGrid.RowHeights[ARow]:= FRowHeights[ARow];
+  FWorksheet.WriteRowHeight(ARow, HeightPxToPt(FRowHeights[ARow]), suLines);
 end;
 
 procedure TSheetWriter.SetLineHeight(const ARow, AHeight: Integer; const AMinValue: Integer = ROW_HEIGHT_DEFAULT);
