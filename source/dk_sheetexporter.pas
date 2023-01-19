@@ -296,6 +296,7 @@ end;
 function TSheetExporter.AddWorksheet(const AName: String): TsWorksheet;
 begin
   Result:= FWorkbook.AddWorksheet(TextToSheetName(AName));
+  FWorkbook.ActiveWorksheet:= Result;
   PageSettings;
 end;
 
