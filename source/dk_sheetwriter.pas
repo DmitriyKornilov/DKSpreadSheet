@@ -19,6 +19,7 @@ type
   TSheetWriter = class(TObject)
   private
     FWorksheet: TsWorksheet;
+    FScreenZoomFactor: Single;
     FGrid: TsWorksheetGrid;
     FRowHeights: TIntVector;
     FColWidths: TIntVector;
@@ -326,6 +327,7 @@ constructor TSheetWriter.Create(const AColWidths: TIntVector;
 begin
   inherited Create;
   FWorksheet:= AWorksheet;
+  FScreenZoomFactor:= Screen.PixelsPerInch/96;
   FGrid:= AGrid;
   FFirstCol:= 0;
   FFirstRow:= 0;
@@ -358,6 +360,7 @@ begin
   begin
     VAppend(FRowHeights, 1);
     VAppend(FRowHeights, 0);
+    FGrid.RowCount:= 2;
   end;
 end;
 
@@ -406,12 +409,14 @@ end;
 procedure TSheetWriter.SetRowHeight(ARow, AValue: Integer);
 begin
   ARow:= RowIndex(ARow);
+  AValue:= Round(AValue*FWorksheet.ZoomFactor/FScreenZoomFactor);
   SetHeight(ARow, AValue);
 end;
 
 procedure TSheetWriter.SetColWidth(ACol, AValue: Integer);
 begin
   ACol:= ColIndex(ACol);
+  AValue:= Round(AValue*FWorksheet.ZoomFactor/FScreenZoomFactor);
   SetWidth(ACol, AValue)
 end;
 
@@ -761,6 +766,7 @@ begin
   FGrid.ShowGridLines:= False;
   FGrid.ShowHeaders:= False;
   FGrid.SelectionPen.Style:= psClear;
+  FGrid.DefaultRowHeight:= ROW_HEIGHT_DEFAULT;
 end;
 
 procedure TSheetWriter.SetCellMainSettings(const ARow, ACol: Integer; const AWordWrap: Boolean);
