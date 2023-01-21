@@ -130,6 +130,8 @@ type
     procedure SetBorders(const AOuterStyle: TsLineStyle; const AOuterColor: TColor; const AInnerStyle: TsLineStyle; const AInnerColor: TColor);
     procedure DrawBorders(ARow, ACol: Integer; const ABordersType: TCellBorderType);
     procedure DrawBorders(ARow1, ACol1, ARow2, ACol2: Integer; const ABordersType: TCellBorderType);
+    //Zoom
+    procedure SetZoom(const APercents: Integer);
     //Sizes
     procedure SetColWidth(ACol, AValue: Integer);
     procedure SetRowHeight(ARow, AValue: Integer);
@@ -900,6 +902,13 @@ begin
   CellIndex(ARow1, ACol1, ARow2, ACol2);
   GetBordersNeed(ABordersType, ALeft, ARight, ATop, ABottom, AInner);
   DrawBorders(ARow1, ACol1, ARow2, ACol2, ALeft, ARight, ATop, ABottom, AInner);
+end;
+
+procedure TSheetWriter.SetZoom(const APercents: Integer);
+begin
+  FWorksheet.ZoomFactor:= APercents/100;
+  if HasGrid then
+    FGrid.ZoomFactor:= FWorksheet.ZoomFactor;
 end;
 
 
