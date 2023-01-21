@@ -731,6 +731,8 @@ var
     Result:= 0;
     for i:= ACol1 to ACol2 do
       Result:= Result + FColWidths[i];
+    if Result>0 then
+      Result:= Round(Result*FScreenZoomFactor/FWorksheet.ZoomFactor);
   end;
 
 begin
