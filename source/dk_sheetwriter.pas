@@ -19,7 +19,6 @@ type
   TSheetWriter = class(TObject)
   private
     FWorksheet: TsWorksheet;
-    FScreenZoomFactor: Single;
     FGrid: TsWorksheetGrid;
     FRowHeights: TIntVector;
     FColWidths: TIntVector;
@@ -55,6 +54,7 @@ type
     function GetRowCount: Integer;
     function GetColCount: Integer;
     function GetRowHeight(const ARow: Integer): Integer;
+    function GetColWidth(const ACol: Integer): Integer;
     function ColIndex(const ACol: Integer): Integer;
     function RowIndex(const ARow: Integer): Integer;
     procedure CellIndex(var ARow, ACol: Integer);
@@ -147,6 +147,9 @@ type
     procedure WriteImage(ARow, ACol: Integer; AFileName: String;
                          AOffsetX: Double= 0.0; AOffsetY: Double=0.0;
                          AScaleX: Double=1.0; AScaleY: Double=1.0);
+    procedure WriteImage(ARow, ACol, AMaxHeight, AMaxWidth: Integer;
+                         AFileName: String;
+                         AOffsetX: Double= 0.0; AOffsetY: Double=0.0);
     //WriteCellValue
     procedure WriteText(const ARow, ACol: Integer; const AValue: String;
                         const ABordersType: TCellBorderType = cbtNone;
@@ -218,6 +221,7 @@ type
     property RowCount: Integer read GetRowCount;
     property ColCount: Integer read GetColCount;
     property RowHeight[const ARow: Integer]: Integer read GetRowHeight;
+    property ColWidth[const ACol: Integer]: Integer read GetColWidth;
   end;
 
 
@@ -329,7 +333,6 @@ constructor TSheetWriter.Create(const AColWidths: TIntVector;
 begin
   inherited Create;
   FWorksheet:= AWorksheet;
-  FScreenZoomFactor:= Screen.PixelsPerInch/96;
   FGrid:= AGrid;
   FFirstCol:= 0;
   FFirstRow:= 0;
@@ -381,6 +384,11 @@ begin
   Result:= FRowHeights[RowIndex(ARow)];
 end;
 
+function TSheetWriter.GetColWidth(const ACol: Integer): Integer;
+begin
+  Result:= FColWidths[ColIndex(ACol)];
+end;
+
 function TSheetWriter.GetRowCount: Integer;
 begin
   Result:= Length(FRowHeights) - 2*Ord(HasGrid);
@@ -411,31 +419,45 @@ end;
 procedure TSheetWriter.SetRowHeight(ARow, AValue: Integer);
 begin
   ARow:= RowIndex(ARow);
-  AValue:= Round(AValue*FWorksheet.ZoomFactor/FScreenZoomFactor);
   SetHeight(ARow, AValue);
 end;
 
 procedure TSheetWriter.SetColWidth(ACol, AValue: Integer);
 begin
   ACol:= ColIndex(ACol);
-  AValue:= Round(AValue*FWorksheet.ZoomFactor/FScreenZoomFactor);
-  SetWidth(ACol, AValue)
+  SetWidth(ACol, AValue);
 end;
 
 procedure TSheetWriter.SetWidth(const ACol, AValue: Integer);
+var
+  W: Integer;
 begin
   FColWidths[ACol]:= AValue;
+  W:= Round(DIMENTION_FACTOR*AValue);
   if HasGrid then
-    FGrid.ColWidths[ACol]:= FColWidths[ACol];
-  FWorksheet.WriteColWidth(ACol, WidthPxToPt(FColWidths[ACol]), suChars);
+    FGrid.ColWidths[ACol]:= W;
+  FWorksheet.WriteColWidth(ACol, WidthPxToPt(W), suChars);
+
+  //FColWidths[ACol]:= AValue;
+  //if HasGrid then
+  //  FGrid.ColWidths[ACol]:= FColWidths[ACol];
+  //FWorksheet.WriteColWidth(ACol, WidthPxToPt(FColWidths[ACol]), suChars);
 end;
 
 procedure TSheetWriter.SetHeight(const ARow, AValue: Integer);
+var
+  H: Integer;
 begin
   FRowHeights[ARow]:= AValue;
+  H:= Round(DIMENTION_FACTOR*AValue*FWorksheet.ZoomFactor);
   if HasGrid then
-    FGrid.RowHeights[ARow]:= FRowHeights[ARow];
-  FWorksheet.WriteRowHeight(ARow, HeightPxToPt(FRowHeights[ARow]), suLines);
+    FGrid.RowHeights[ARow]:= H;
+  FWorksheet.WriteRowHeight(ARow, HeightPxToPt(H), suLines);
+
+  //FRowHeights[ARow]:= AValue;
+  //if HasGrid then
+  //  FGrid.RowHeights[ARow]:= FRowHeights[ARow];
+  //FWorksheet.WriteRowHeight(ARow, HeightPxToPt(FRowHeights[ARow]), suLines);
 end;
 
 procedure TSheetWriter.SetLineHeight(const ARow, AHeight: Integer; const AMinValue: Integer = ROW_HEIGHT_DEFAULT);
@@ -544,6 +566,30 @@ procedure TSheetWriter.WriteImage(ARow, ACol: Integer; AFileName: String;
 begin
   CellIndex(ARow, ACol);
   FWorksheet.WriteImage(ARow, ACol, AFileName, AOffsetX, AOffsetY, AScaleX, AScaleY);
+end;
+
+procedure TSheetWriter.WriteImage(ARow, ACol, AMaxHeight, AMaxWidth: Integer;
+  AFileName: String; AOffsetX: Double; AOffsetY: Double);
+var
+  ScaleH, ScaleW, Scale: Single;
+  PNG: TPortableNetworkGraphic;
+begin
+  PNG:= TPortableNetworkGraphic.Create;
+  try
+    PNG.LoadFromFile(AFileName);
+    ScaleH:= FWorksheet.ZoomFactor * AMaxHeight / PNG.Height;
+    ScaleW:= FWorksheet.ZoomFactor * AMaxWidth  / PNG.Width;
+
+    if ScaleW<=ScaleH then
+      Scale:= ScaleW
+    else
+      Scale:= ScaleH;
+
+    WriteImage(ARow, ACol, AFileName, AOffsetX, AOffsetY, Scale, Scale);
+
+  finally
+    FreeAndNil(PNG);
+  end;
 end;
 
 procedure TSheetWriter.WriteText(const ARow, ACol: Integer; const AValue: String;
@@ -730,9 +776,7 @@ var
   begin
     Result:= 0;
     for i:= ACol1 to ACol2 do
-      Result:= Result + FColWidths[i];
-    if Result>0 then
-      Result:= Round(Result*FScreenZoomFactor/FWorksheet.ZoomFactor);
+      Result:= Result + ColWidth[i];
   end;
 
 begin
@@ -772,6 +816,8 @@ begin
   FGrid.SelectionPen.Style:= psClear;
   FGrid.DefaultRowHeight:= ROW_HEIGHT_DEFAULT;
 end;
+
+
 
 procedure TSheetWriter.SetCellMainSettings(const ARow, ACol: Integer; const AWordWrap: Boolean);
 begin
