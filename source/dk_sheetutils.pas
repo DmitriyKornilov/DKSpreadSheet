@@ -5,7 +5,7 @@ unit DK_SheetUtils;
 interface
 
 uses
-  Classes, {SysUtils,} fpspreadsheetgrid, fpstypes, Graphics, DK_SheetConst;
+  Classes, SysUtils, fpspreadsheetgrid, fpstypes, Graphics, DK_SheetConst;
 
   //use in OnDrawCell TsWorksheetGrid to draw borders for frozen cells
   procedure DrawFrozenBorders(const AGrid: TsWorksheetGrid;
@@ -13,14 +13,24 @@ uses
                             const AFrozenCol1, AFrozenRow1, AFrozenCol2, AFrozenRow2: Integer;
                             const ARect: TRect;
                             const ALineColor: TColor = clBlack);
+
   function FontStyleSheetsToGraphics(const AFontStyle: TsFontStyles): TFontStyles;
   function FontStyleGraphicsToSheets(const AFontStyle: TFontStyles): TsFontStyles;
+
   function ColorGraphicsToSheets(const AColor: TColor): TsColor;
   function ColorSheetsToGraphics(const AColor: TsColor): TColor;
+  function ChooseColor(const AValue, ADefault: TColor): TColor;
+
   function WidthPxToPt(const AValuePx: Integer): Single;
   function HeightPxToPt(const AValuePx: Integer): Single;
+
   function AlignmentToSheetsHorAlignment(const AAlignment: TAlignment): TsHorAlignment;
-  function ChooseColor(const AValue, ADefault: TColor): TColor;
+
+  function PNGWidthHeight(const AFileName: String; out AWidth, AHeight: Integer): Boolean;
+  function BMPWidthHeight(const AFileName: String; out AWidth, AHeight: Integer): Boolean;
+
+  function MillimeterToPixel(const AValue: Double): Integer;
+  function PixelToMillimeter(const AValue: Integer): Double;
 
 implementation
 
@@ -109,6 +119,54 @@ begin
   Result:= AValue;
   if Result=clNone then
     Result:= ADefault;
+end;
+
+function PNGWidthHeight(const AFileName: String; out AWidth, AHeight: Integer): Boolean;
+var
+  PNG: TPortableNetworkGraphic;
+begin
+  AWidth:= 0;
+  AHeight:= 0;
+  Result:= FileExists(AFileName);
+  if not Result then Exit;
+
+  PNG:= TPortableNetworkGraphic.Create;
+  try
+    PNG.LoadFromFile(AFileName);
+    AWidth:= PNG.Width;
+    AHeight:= PNG.Height;
+  finally
+    FreeAndNil(PNG);
+  end;
+end;
+
+function BMPWidthHeight(const AFileName: String; out AWidth, AHeight: Integer): Boolean;
+var
+  BMP: TBitmap;
+begin
+  AWidth:= 0;
+  AHeight:= 0;
+  Result:= FileExists(AFileName);
+  if not Result then Exit;
+
+  BMP:= TBitmap.Create;
+  try
+    BMP.LoadFromFile(AFileName);
+    AWidth:= BMP.Width;
+    AHeight:= BMP.Height;
+  finally
+    FreeAndNil(BMP);
+  end;
+end;
+
+function MillimeterToPixel(const AValue: Double): Integer;
+begin
+  Result:= Round(3.7795275591*AValue);
+end;
+
+function PixelToMillimeter(const AValue: Integer): Double;
+begin
+  Result:= 0.2645833333*AValue;
 end;
 
 
