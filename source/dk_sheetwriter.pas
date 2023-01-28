@@ -433,10 +433,16 @@ var
   W: Integer;
 begin
   FColWidths[ACol]:= AValue;
-  W:= Round(DIMENTION_FACTOR*AValue);
   if HasGrid then
-    FGrid.ColWidths[ACol]:= W;
+    FGrid.ColWidths[ACol]:= Round(DIMENTION_FACTOR_GRID*AValue);
+  W:= Round(DIMENTION_FACTOR_SHEET*AValue);
   FWorksheet.WriteColWidth(ACol, WidthPxToPt(W), suChars);
+
+  //FColWidths[ACol]:= AValue;
+  //W:= Round(DIMENTION_FACTOR_SHEET*AValue);
+  //if HasGrid then
+  //  FGrid.ColWidths[ACol]:= W;
+  //FWorksheet.WriteColWidth(ACol, WidthPxToPt(W), suChars);
 
   //FColWidths[ACol]:= AValue;
   //if HasGrid then
@@ -449,10 +455,16 @@ var
   H: Integer;
 begin
   FRowHeights[ARow]:= AValue;
-  H:= Round(DIMENTION_FACTOR*AValue*FWorksheet.ZoomFactor);
   if HasGrid then
-    FGrid.RowHeights[ARow]:= H;
+    FGrid.RowHeights[ARow]:= Round(DIMENTION_FACTOR_Grid*AValue*FWorksheet.ZoomFactor);
+  H:= Round(DIMENTION_FACTOR_SHEET*AValue*FWorksheet.ZoomFactor);
   FWorksheet.WriteRowHeight(ARow, HeightPxToPt(H), suLines);
+
+  //FRowHeights[ARow]:= AValue;
+  //H:= Round(DIMENTION_FACTOR_SHEET*AValue*FWorksheet.ZoomFactor);
+  //if HasGrid then
+  //  FGrid.RowHeights[ARow]:= H;
+  //FWorksheet.WriteRowHeight(ARow, HeightPxToPt(H), suLines);
 
   //FRowHeights[ARow]:= AValue;
   //if HasGrid then
