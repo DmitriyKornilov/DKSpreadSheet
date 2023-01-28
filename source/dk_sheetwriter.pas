@@ -358,6 +358,8 @@ end;
 
 procedure TSheetWriter.Clear;
 begin
+  SetFrozenRows(0);
+  SetFrozenCols(0);
   FWorksheet.Clear;
   FRowHeights:= nil;
   FBGColorMatrix:= nil;
