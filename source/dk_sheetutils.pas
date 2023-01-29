@@ -29,8 +29,8 @@ uses
   function PNGWidthHeight(const AFileName: String; out AWidth, AHeight: Integer): Boolean;
   function BMPWidthHeight(const AFileName: String; out AWidth, AHeight: Integer): Boolean;
 
-  function MillimeterToPixel(const AValue: Double): Integer;
-  function PixelToMillimeter(const AValue: Integer): Double;
+  function MillimeterToPixel(const AValue: Double): Double;
+  function PixelToMillimeter(const AValue: Double): Double;
 
 implementation
 
@@ -159,12 +159,12 @@ begin
   end;
 end;
 
-function MillimeterToPixel(const AValue: Double): Integer;
+function MillimeterToPixel(const AValue: Double): Double;
 begin
-  Result:= Round(3.7795275591*AValue);
+  Result:= 3.7795275591*AValue;
 end;
 
-function PixelToMillimeter(const AValue: Integer): Double;
+function PixelToMillimeter(const AValue: Double): Double;
 begin
   Result:= 0.2645833333*AValue;
 end;

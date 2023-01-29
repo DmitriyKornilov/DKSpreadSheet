@@ -478,6 +478,7 @@ begin
   if HasGrid then
     FGrid.ColWidths[ACol]:= WidthToGrid(AValue);
   FWorksheet.WriteColWidth(ACol, WidthPxToPt(WidthToSheet(AValue)), suChars);
+  //FWorksheet.WriteColWidth(ACol, PixelToMillimeter(WidthToSheet(AValue)), suMillimeters);
 end;
 
 procedure TSheetWriter.SetHeight(const ARow, AValue: Integer);
@@ -486,6 +487,7 @@ begin
   if HasGrid then
     FGrid.RowHeights[ARow]:= HeightToGrid(AValue);
   FWorksheet.WriteRowHeight(ARow, HeightPxToPt(HeightToSheet(AValue)), suLines);
+  //FWorksheet.WriteRowHeight(ARow, PixelToMillimeter(HeightToSheet(AValue)), suMillimeters);
 end;
 
 procedure TSheetWriter.SetLineHeight(const ARow, AHeight: Integer; const AMinValue: Integer = ROW_HEIGHT_DEFAULT);
@@ -614,8 +616,8 @@ begin
 
   Scale:= Min(CellWidth/AImageWidth, CellHeight/AImageHeight);
 
-  OffsetX:= PixelToMillimeter(Round(AMarginLeft*FWorksheet.ZoomFactor));
-  OffsetY:= PixelToMillimeter(Round(AMarginTop*FWorksheet.ZoomFactor));
+  OffsetX:= PixelToMillimeter(AMarginLeft*FWorksheet.ZoomFactor);
+  OffsetY:= PixelToMillimeter(AMarginTop*FWorksheet.ZoomFactor);
 
   if HasGrid then
   begin
@@ -625,7 +627,7 @@ begin
 
   if HasGrid then
     WriteImage(ARow1, ACol1, AFileName, OffsetX, OffsetY, Scale, Scale)
-  else
+  else //bug fps - swaped OffsetY/OffsetX
     WriteImage(ARow1, ACol1, AFileName, OffsetY, OffsetX, Scale, Scale);
 end;
 
