@@ -184,14 +184,10 @@ type
     procedure WriteTextVertical(const ARow, ACol: Integer; const AValue: String;
                         const ABordersType: TCellBorderType = cbtNone;
                         const AWordWrap: Boolean = True;
-                        const AWrapToWordParts: Boolean = False;
-                        const ARedStrWidth: Integer = 0;
                         const ARichTextParams: TsRichTextParams = nil);
     procedure WriteTextVertical(ARow1, ACol1, ARow2, ACol2: Integer; AValue: String;
                         const ABordersType: TCellBorderType = cbtNone;
                         const AWordWrap: Boolean = True;
-                        const AWrapToWordParts: Boolean = False;
-                        const ARedStrWidth: Integer = 0;
                         const ARichTextParams: TsRichTextParams = nil);
     procedure WriteNumber(const ARow, ACol: Integer; const AValue: Double;
                           const ABordersType: TCellBorderType = cbtNone;
@@ -696,17 +692,15 @@ end;
 procedure TSheetWriter.WriteTextVertical(const ARow, ACol: Integer;
   const AValue: String; const ABordersType: TCellBorderType;
   const AWordWrap: Boolean;
-  const AWrapToWordParts: Boolean; const ARedStrWidth: Integer;
   const ARichTextParams: TsRichTextParams);
 begin
-  WriteTextVertical(ARow, ACol, ARow, ACol, AValue, ABordersType, AWordWrap,
-            AWrapToWordParts, ARedStrWidth, ARichTextParams);
+  WriteTextVertical(ARow, ACol, ARow, ACol, AValue,
+                    ABordersType, AWordWrap, ARichTextParams);
 end;
 
 procedure TSheetWriter.WriteTextVertical(ARow1, ACol1, ARow2, ACol2: Integer;
   AValue: String; const ABordersType: TCellBorderType;
   const AWordWrap: Boolean;
-  const AWrapToWordParts: Boolean; const ARedStrWidth: Integer;
   const ARichTextParams: TsRichTextParams);
 begin
   CellIndex(ARow1, ACol1, ARow2, ACol2);
@@ -717,8 +711,6 @@ begin
   else
     FWorksheet.WriteText(ARow1, ACol1, AValue, ARichTextParams);
 end;
-
-
 
 procedure TSheetWriter.WriteNumber(const ARow, ACol: Integer; const AValue: Double;
                             const ABordersType: TCellBorderType = cbtNone;
