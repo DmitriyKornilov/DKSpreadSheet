@@ -848,7 +848,7 @@ begin
     BreakSymbol:= SYMBOL_BREAK
   else
     BreakSymbol:= ' ';
-  CellWidth:= ColsWidth(ACol1, ACol2);
+  CellWidth:= ColsWidth(ACol1+1, ACol2+1);
   Font:= TFont.Create;
   Font.Name:= FFontName;
   Font.Size:= Round(FFontSize);
