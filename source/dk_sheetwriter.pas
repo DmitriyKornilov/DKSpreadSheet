@@ -674,19 +674,12 @@ procedure TSheetWriter.WriteText(ARow1, ACol1, ARow2, ACol2: Integer; AValue: St
 var
   CellHeight: Integer;
 begin
+  CellHeight:= ROW_HEIGHT_DEFAULT;
+  if (AValue<>EmptyStr) and AAutoHeight then
+    CellHeight:= Round(CalcCellHeight(AValue, ACol1, ACol2, AWrapToWordParts, ARedStrWidth)/(ARow2-ARow1+1));
   CellIndex(ARow1, ACol1, ARow2, ACol2);
-  if AValue=EmptyStr then
-  begin
-    SetCellSettings(ARow1, ACol1, ARow2, ACol2, ROW_HEIGHT_DEFAULT, AWordWrap, ABordersType);
-    FWorksheet.WriteBlank(ARow1, ACol1);
-  end
-  else begin
-    CellHeight:= ROW_HEIGHT_DEFAULT;
-    if AAutoHeight then
-      CellHeight:= Round(CalcCellHeight(AValue, ACol1, ACol2, AWrapToWordParts, ARedStrWidth)/(ARow2-ARow1+1));
-    SetCellSettings(ARow1, ACol1, ARow2, ACol2, CellHeight, AWordWrap, ABordersType);
-    FWorksheet.WriteText(ARow1, ACol1, AValue, ARichTextParams);
-  end;
+  SetCellSettings(ARow1, ACol1, ARow2, ACol2, CellHeight, AWordWrap, ABordersType);
+  FWorksheet.WriteText(ARow1, ACol1, AValue, ARichTextParams);
 end;
 
 procedure TSheetWriter.WriteTextVertical(const ARow, ACol: Integer;
@@ -848,7 +841,7 @@ begin
     BreakSymbol:= SYMBOL_BREAK
   else
     BreakSymbol:= ' ';
-  CellWidth:= ColsWidth(ACol1+1, ACol2+1);
+  CellWidth:= ColsWidth(ACol1, ACol2);
   Font:= TFont.Create;
   Font.Name:= FFontName;
   Font.Size:= Round(FFontSize);
