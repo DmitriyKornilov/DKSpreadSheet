@@ -8,7 +8,14 @@ uses
   Classes, SysUtils, DK_Dialogs, DK_StrUtils, DK_SheetConst, Dialogs,
   fpstypes, fpspreadsheet, fpspreadsheetgrid, fpsallformats;
 
+const
+  spoPortrait  = fpsTypes.spoPortrait;
+  spoLandscape = fpsTypes.spoLandscape;
+
 type
+  TsPageOrientation = fpsTypes.TsPageOrientation;
+  TsWorksheet       = fpspreadsheet.TsWorksheet;
+  TsWorksheetGrid   = fpspreadsheetgrid.TsWorksheetGrid;
 
   TPageFit = (pfOnePage, //всё на одной странице
               pfWidth,   //заполнить по ширине 1 страницы (по высоте - сколько нужно, чтобы вместить все)
