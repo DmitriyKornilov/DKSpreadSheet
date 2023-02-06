@@ -841,12 +841,13 @@ begin
     BreakSymbol:= SYMBOL_BREAK
   else
     BreakSymbol:= ' ';
-  CellWidth:= ColsWidth(ACol1, ACol2);
+  CellWidth:= Trunc(DIMENTION_FACTOR*FScreenZoomFactor*ColsWidth(ACol1, ACol2));
   Font:= TFont.Create;
   Font.Name:= FFontName;
   Font.Size:= Round(FFontSize);
   Font.Style:= FontStyleSheetsToGraphics(FFontStyle);
   Result:= TextToCell(AText, Font, CellWidth, ARedStrWidth, AWrapToWordParts, BreakSymbol);
+  Result:= Round(Result/DIMENTION_FACTOR/FScreenZoomFactor);
   FreeAndNil(Font);
 end;
 
