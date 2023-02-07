@@ -10,7 +10,7 @@ uses
 const
   {---COMMON PROPERTIES---}
   //Dimensions
-  DIMENTION_FACTOR = 0.78;
+  //DIMENTION_FACTOR = 0.78;
   WIDTH_PX_RATIO = 7;
   HEIGHT_PX_RATIO = 14;
   //Alignment

@@ -450,22 +450,22 @@ end;
 
 function TSheetWriter.WidthToGrid(const AValue: Integer): Integer;
 begin
-  Result:= Round(DIMENTION_FACTOR*FScreenZoomFactor*AValue);
+  Result:= AValue;
 end;
 
 function TSheetWriter.WidthToSheet(const AValue: Integer): Integer;
 begin
-  Result:= Round(DIMENTION_FACTOR*AValue);
+  Result:= AValue;
 end;
 
 function TSheetWriter.HeightToGrid(const AValue: Integer): Integer;
 begin
-  Result:= Round(DIMENTION_FACTOR*FScreenZoomFactor*FWorksheet.ZoomFactor*AValue);
+  Result:= Round(AValue*FWorksheet.ZoomFactor*FScreenZoomFactor);
 end;
 
 function TSheetWriter.HeightToSheet(const AValue: Integer): Integer;
 begin
-  Result:= Round(DIMENTION_FACTOR*FWorksheet.ZoomFactor*AValue);
+  Result:= Round(AValue*FWorksheet.ZoomFactor);
 end;
 
 procedure TSheetWriter.SetWidth(const ACol, AValue: Integer);
@@ -474,7 +474,6 @@ begin
   if HasGrid then
     FGrid.ColWidths[ACol]:= WidthToGrid(AValue);
   FWorksheet.WriteColWidth(ACol, WidthPxToPt(WidthToSheet(AValue)), suChars);
-  //FWorksheet.WriteColWidth(ACol, PixelToMillimeter(WidthToSheet(AValue)), suMillimeters);
 end;
 
 procedure TSheetWriter.SetHeight(const ARow, AValue: Integer);
@@ -483,7 +482,6 @@ begin
   if HasGrid then
     FGrid.RowHeights[ARow]:= HeightToGrid(AValue);
   FWorksheet.WriteRowHeight(ARow, HeightPxToPt(HeightToSheet(AValue)), suLines);
-  //FWorksheet.WriteRowHeight(ARow, PixelToMillimeter(HeightToSheet(AValue)), suMillimeters);
 end;
 
 procedure TSheetWriter.SetLineHeight(const ARow, AHeight: Integer; const AMinValue: Integer = ROW_HEIGHT_DEFAULT);
@@ -617,8 +615,8 @@ begin
 
   if HasGrid then
   begin
-    OffsetX:= OffsetX*DIMENTION_FACTOR;
-    OffsetY:= OffsetY*DIMENTION_FACTOR;
+    //OffsetX:= OffsetX*DIMENTION_FACTOR;
+    //OffsetY:= OffsetY*DIMENTION_FACTOR;
   end;
 
   if HasGrid then
@@ -837,17 +835,18 @@ var
   BreakSymbol: String;
   Font: TFont;
 begin
-  if HasGrid then
-    BreakSymbol:= SYMBOL_BREAK
-  else
+  //if HasGrid then
+  //  BreakSymbol:= SYMBOL_BREAK
+  //else
     BreakSymbol:= ' ';
-  CellWidth:= Trunc(DIMENTION_FACTOR*FScreenZoomFactor*ColsWidth(ACol1, ACol2));
+  CellWidth:= ColsWidth(ACol1, ACol2);
+  CellWidth:= Round(CellWidth*FScreenZoomFactor);
   Font:= TFont.Create;
   Font.Name:= FFontName;
   Font.Size:= Round(FFontSize);
   Font.Style:= FontStyleSheetsToGraphics(FFontStyle);
   Result:= TextToCell(AText, Font, CellWidth, ARedStrWidth, AWrapToWordParts, BreakSymbol);
-  Result:= Round(Result/DIMENTION_FACTOR/FScreenZoomFactor);
+  Result:= Round(Result/FScreenZoomFactor);
   FreeAndNil(Font);
 end;
 
