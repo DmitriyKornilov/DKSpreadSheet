@@ -481,7 +481,7 @@ begin
   FRowHeights[ARow]:= AValue;
   if HasGrid then
     FGrid.RowHeights[ARow]:= HeightToGrid(AValue);
-  FWorksheet.WriteRowHeight(ARow, HeightPxToPt(HeightToSheet(AValue)), suLines);
+  FWorksheet.WriteRowHeight(ARow, HeightPxToPt(HeightToSheet(AValue-2{!})), suLines);
 end;
 
 procedure TSheetWriter.SetLineHeight(const ARow, AHeight: Integer; const AMinValue: Integer = ROW_HEIGHT_DEFAULT);
