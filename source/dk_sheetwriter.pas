@@ -395,6 +395,7 @@ begin
   FBGColorMatrix:= nil;
   if HasGrid then
   begin
+    FGrid.Clear;
     VAppend(FRowHeights, 1);
     VAppend(FRowHeights, 0);
     FGrid.RowCount:= 2;
