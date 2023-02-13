@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Grids, fpstypes, fpspreadsheet, fpspreadsheetgrid, Graphics,
   DK_Const, DK_Vector, DK_Matrix, DK_TextUtils, DK_StrUtils, DK_SheetConst,
-  DK_SheetUtils, DK_Math, Forms;
+  DK_SheetUtils, DK_Math;
 
 type
 
@@ -22,7 +22,8 @@ type
     FGrid: TsWorksheetGrid;
     FRowHeights: TIntVector;
     FColWidths: TIntVector;
-    FScreenZoomFactor: Double;
+    FScreenScaleX, FScreenScaleY: Double;
+    //FScreenZoomFactor: Double;
     FFirstCol: Integer;
     FFirstRow: Integer;
     //Color
@@ -154,6 +155,10 @@ type
     procedure WriteImage(ARow, ACol: Integer; AFileName: String;
                          AOffsetX: Double= 0.0; AOffsetY: Double=0.0;
                          AScaleX: Double=1.0; AScaleY: Double=1.0);
+    procedure WriteImage(ARow, ACol: Integer; AStream: TMemoryStream;
+                         AOffsetX: Double= 0.0; AOffsetY: Double=0.0;
+                         AScaleX: Double=1.0; AScaleY: Double=1.0);
+
     procedure WriteImageFit(ARow1, ACol1, ARow2, ACol2, AImageHeight, AImageWidth: Integer;
                             AFileName: String;
                             AMarginTop: Integer = 0;
@@ -228,6 +233,8 @@ type
                         const ABordersType: TCellBorderType = cbtNone;
                         AFormatString: String = '');
 
+    function TotalRowsHeight: Integer;
+    function TotalColsWidth: Integer;
     function RowsHeight(const ARow1, ARow2: Integer): Integer;
     function ColsWidth(const ACol1, ACol2: Integer): Integer;
     property RowHeight[const ARow: Integer]: Integer read GetRowHeight;
@@ -238,6 +245,10 @@ type
     property HasGrid: Boolean read GetHasGrid;
     property RowCount: Integer read GetRowCount;
     property ColCount: Integer read GetColCount;
+
+    //property ScreenZoomFactor: Double read FScreenZoomFactor;
+    property ScreenScaleX: Double read FScreenScaleX;
+    property ScreenScaleY: Double read FScreenScaleY;
 
   end;
 
@@ -354,14 +365,15 @@ begin
   FFirstCol:= 0;
   FFirstRow:= 0;
   FColWidths:= VCut(AColWidths);
-  FScreenZoomFactor:= Screen.PixelsPerInch/96;
+  //FScreenZoomFactor:= Screen.PixelsPerInch/96;
+  FScreenScaleX:= ScreenInfo.PixelsPerInchX/96;
+  FScreenScaleY:= ScreenInfo.PixelsPerInchY/96;
   if HasGrid then
   begin
     FFirstCol:= 1;
     FFirstRow:= 1;
     VIns(FColWidths, 0, 1);
     VAppend(FColWidths, 0);
-    FGrid.FrozenBorderPen.Style:= psClear;
   end;
   Clear;
   SetDefaultGridSettings;
@@ -460,7 +472,7 @@ end;
 
 function TSheetWriter.HeightToGrid(const AValue: Integer): Integer;
 begin
-  Result:= Round(AValue*FWorksheet.ZoomFactor*FScreenZoomFactor);
+  Result:= Round(AValue*FWorksheet.ZoomFactor*FScreenScaleY{FScreenZoomFactor});
 end;
 
 function TSheetWriter.HeightToSheet(const AValue: Integer): Integer;
@@ -473,7 +485,8 @@ begin
   FColWidths[ACol]:= AValue;
   if HasGrid then
     FGrid.ColWidths[ACol]:= WidthToGrid(AValue);
-  FWorksheet.WriteColWidth(ACol, WidthPxToPt(WidthToSheet(AValue)), suChars);
+  //FWorksheet.WriteColWidth(ACol, WidthPxToPt(WidthToSheet(AValue)), suChars);
+  FWorksheet.WriteColWidth(ACol, PixelToMillimeter(WidthToSheet(AValue)), suMillimeters);
 end;
 
 procedure TSheetWriter.SetHeight(const ARow, AValue: Integer);
@@ -481,7 +494,8 @@ begin
   FRowHeights[ARow]:= AValue;
   if HasGrid then
     FGrid.RowHeights[ARow]:= HeightToGrid(AValue);
-  FWorksheet.WriteRowHeight(ARow, HeightPxToPt(HeightToSheet(AValue-2{!})), suLines);
+  //FWorksheet.WriteRowHeight(ARow, HeightPxToPt(HeightToSheet(AValue-2{!})), suLines);
+  FWorksheet.WriteRowHeight(ARow, PixelToMillimeter(HeightToSheet(AValue)), suMillimeters);
 end;
 
 procedure TSheetWriter.SetLineHeight(const ARow, AHeight: Integer; const AMinValue: Integer = ROW_HEIGHT_DEFAULT);
@@ -591,6 +605,13 @@ procedure TSheetWriter.WriteImage(ARow, ACol: Integer;
 begin
   CellIndex(ARow, ACol);
   FWorksheet.WriteImage(ARow, ACol, AFileName, AOffsetX, AOffsetY, AScaleX, AScaleY);
+end;
+
+procedure TSheetWriter.WriteImage(ARow, ACol: Integer; AStream: TMemoryStream;
+  AOffsetX: Double; AOffsetY: Double; AScaleX: Double; AScaleY: Double);
+begin
+  CellIndex(ARow, ACol);
+  FWorksheet.WriteImage(ARow, ACol, AStream, AOffsetX, AOffsetY, AScaleX, AScaleY);
 end;
 
 procedure TSheetWriter.WriteImageFit(ARow1, ACol1, ARow2, ACol2, AImageHeight, AImageWidth: Integer;
@@ -809,6 +830,16 @@ begin
   FWorksheet.WriteDateTime(ARow1, ACol1, AValue, AFormatString);
 end;
 
+function TSheetWriter.TotalRowsHeight: Integer;
+begin
+  Result:= RowsHeight(1, RowCount);
+end;
+
+function TSheetWriter.TotalColsWidth: Integer;
+begin
+  Result:= ColsWidth(1, ColCount);
+end;
+
 function TSheetWriter.RowsHeight(const ARow1, ARow2: Integer): Integer;
 var
   i: Integer;
@@ -840,13 +871,13 @@ begin
   //else
     BreakSymbol:= ' ';
   CellWidth:= ColsWidth(ACol1, ACol2);
-  CellWidth:= Round(CellWidth*FScreenZoomFactor);
+  CellWidth:= Round(CellWidth*FScreenScaleX{FScreenZoomFactor});
   Font:= TFont.Create;
   Font.Name:= FFontName;
   Font.Size:= Round(FFontSize);
   Font.Style:= FontStyleSheetsToGraphics(FFontStyle);
   Result:= TextToCell(AText, Font, CellWidth, ARedStrWidth, AWrapToWordParts, BreakSymbol);
-  Result:= Round(Result/FScreenZoomFactor);
+  Result:= Round(Result/FScreenScaleY{FScreenZoomFactor});
   FreeAndNil(Font);
 end;
 
@@ -872,9 +903,8 @@ begin
   FGrid.ShowHeaders:= False;
   FGrid.SelectionPen.Style:= psClear;
   FGrid.DefaultRowHeight:= ROW_HEIGHT_DEFAULT;
+  FGrid.FrozenBorderPen.Style:= psClear;
 end;
-
-
 
 procedure TSheetWriter.SetCellMainSettings(const ARow, ACol: Integer; const AWordWrap: Boolean);
 begin
