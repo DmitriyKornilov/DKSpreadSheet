@@ -131,6 +131,7 @@ end;
 function OpenSaveDialog(var AFileName: String; out AFormat: TsSpreadsheetFormat): Boolean;
 var
   SD: TSaveDialog;
+  FileExtention: String;
 begin
   Result:= False;
   SD:= TSaveDialog.Create(nil);
@@ -141,10 +142,16 @@ begin
   if Result then
   begin
     case SD.FilterIndex of
-    1: AFormat:= sfOOXML;
-    2: AFormat:= sfOpenDocument;
+    1: begin
+         AFormat:= sfOOXML;
+         FileExtention:= 'xlsx';
+       end;
+    2: begin
+         AFormat:= sfOpenDocument;
+         FileExtention:= 'ods';
+       end;
     end;
-    AFileName:= SD.FileName;
+    AFileName:= SFileName(SD.FileName, FileExtention);
   end;
   FreeAndNil(SD);
 end;
