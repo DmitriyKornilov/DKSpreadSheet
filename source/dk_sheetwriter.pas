@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Grids, fpstypes, fpspreadsheet, fpspreadsheetgrid, Graphics,
   DK_Const, DK_Vector, DK_Matrix, DK_TextUtils, DK_StrUtils, DK_SheetConst,
-  DK_SheetUtils, DK_Math;
+  DK_SheetUtils, DK_Math, DK_PPI, Math;
 
 type
 
@@ -22,8 +22,6 @@ type
     FGrid: TsWorksheetGrid;
     FRowHeights: TIntVector;
     FColWidths: TIntVector;
-    FScreenScaleX, FScreenScaleY: Double;
-    //FScreenZoomFactor: Double;
     FFirstCol: Integer;
     FFirstRow: Integer;
     //Color
@@ -79,6 +77,7 @@ type
     procedure SetCellMainSettings(const ARow, ACol: Integer; const AWordWrap: Boolean);
     procedure SetCellSettings(const ARow1, ACol1, ARow2, ACol2, ARowHeight: Integer;
                               const AWordWrap: Boolean; const ABordersType: TCellBorderType);
+
 
     function WidthToGrid(const AValue: Integer): Integer;
     function WidthToSheet(const AValue: Integer): Integer;
@@ -140,6 +139,7 @@ type
     procedure DrawBorders(ARow1, ACol1, ARow2, ACol2: Integer; const ABordersType: TCellBorderType);
     //Zoom
     procedure SetZoom(const APercents: Integer);
+    function ApplyZoom(const AValue: Integer): Integer;
     //Sizes
     procedure SetColWidth(ACol, AValue: Integer);
     procedure SetRowHeight(ARow, AValue: Integer);
@@ -246,17 +246,9 @@ type
     property RowCount: Integer read GetRowCount;
     property ColCount: Integer read GetColCount;
 
-    //property ScreenZoomFactor: Double read FScreenZoomFactor;
-    property ScreenScaleX: Double read FScreenScaleX;
-    property ScreenScaleY: Double read FScreenScaleY;
-
   end;
 
-
-
 implementation
-
-
 
 { TSheetWriter }
 
@@ -365,9 +357,6 @@ begin
   FFirstCol:= 0;
   FFirstRow:= 0;
   FColWidths:= VCut(AColWidths);
-  //FScreenZoomFactor:= Screen.PixelsPerInch/96;
-  FScreenScaleX:= ScreenInfo.PixelsPerInchX/96;
-  FScreenScaleY:= ScreenInfo.PixelsPerInchY/96;
   if HasGrid then
   begin
     FFirstCol:= 1;
@@ -461,6 +450,11 @@ begin
   SetWidth(ACol, AValue);
 end;
 
+function TSheetWriter.ApplyZoom(const AValue: Integer): Integer;
+begin
+  Result:= Ceil(AValue*FWorksheet.ZoomFactor);
+end;
+
 function TSheetWriter.WidthToGrid(const AValue: Integer): Integer;
 begin
   Result:= AValue;
@@ -473,12 +467,12 @@ end;
 
 function TSheetWriter.HeightToGrid(const AValue: Integer): Integer;
 begin
-  Result:= Round(AValue*FWorksheet.ZoomFactor*FScreenScaleY{FScreenZoomFactor});
+  Result:= HeightFromDefaultToScreen(HeightToSheet(AValue));
 end;
 
 function TSheetWriter.HeightToSheet(const AValue: Integer): Integer;
 begin
-  Result:= Round(AValue*FWorksheet.ZoomFactor);
+  Result:= ApplyZoom(AValue);
 end;
 
 procedure TSheetWriter.SetWidth(const ACol, AValue: Integer);
@@ -634,12 +628,6 @@ begin
 
   OffsetX:= PixelToMillimeter(AMarginLeft*FWorksheet.ZoomFactor);
   OffsetY:= PixelToMillimeter(AMarginTop*FWorksheet.ZoomFactor);
-
-  if HasGrid then
-  begin
-    //OffsetX:= OffsetX*DIMENTION_FACTOR;
-    //OffsetY:= OffsetY*DIMENTION_FACTOR;
-  end;
 
   if HasGrid then
     WriteImage(ARow1, ACol1, AFileName, OffsetX, OffsetY, Scale, Scale)
@@ -872,13 +860,13 @@ begin
   //else
     BreakSymbol:= ' ';
   CellWidth:= ColsWidth(ACol1, ACol2);
-  CellWidth:= Round(CellWidth*FScreenScaleX{FScreenZoomFactor});
+  CellWidth:= HeightFromDefaultToScreen(CellWidth);
   Font:= TFont.Create;
   Font.Name:= FFontName;
   Font.Size:= Round(FFontSize);
   Font.Style:= FontStyleSheetsToGraphics(FFontStyle);
   Result:= TextToCell(AText, Font, CellWidth, ARedStrWidth, AWrapToWordParts, BreakSymbol);
-  Result:= Round(Result/FScreenScaleY{FScreenZoomFactor});
+  Result:= HeightFromScreenToDefault(Result);
   FreeAndNil(Font);
 end;
 
