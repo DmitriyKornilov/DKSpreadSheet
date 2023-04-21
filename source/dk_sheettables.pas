@@ -16,6 +16,7 @@ type
 
   TSheetColumnType = (
     ctUndefined,
+    ctOrder,
     ctInteger,
     ctString,
     ctDate,
@@ -96,6 +97,7 @@ type
                         const AVertAlignment: TsVertAlignment = vaCenter;
                         const AColumnValuesBGColor: TColor = clNone);
 
+    procedure SetColumnOrder(const AName: String);
     procedure SetColumnInteger(const AName: String; const AValues: TIntVector);
     procedure SetColumnString(const AName: String; const AValues: TStrVector);
     procedure SetColumnDate(const AName: String; const AValues: TDateVector;
@@ -104,6 +106,7 @@ type
     procedure SetColumnTime(const AName: String; const AValues: TTimeVector;
                             const AFormatString: String = 'hh:nn');
 
+    procedure SetColumnOrder(const AColIndex: Integer);
     procedure SetColumnInteger(const AColIndex: Integer; const AValues: TIntVector);
     procedure SetColumnString(const AColIndex: Integer; const AValues: TStrVector);
     procedure SetColumnDate(const AColIndex: Integer; const AValues: TDateVector;
@@ -245,7 +248,7 @@ begin
 
   for i:= 0 to High(FColumnValues) do
   begin
-    if not IsSelected then
+    if not ASelected then
     begin
       if FColumnValuesBGColors[i]<>clNone then
         FWriter.SetBackground(FColumnValuesBGColors[i])
@@ -257,7 +260,9 @@ begin
     R:= RowFromLineIndex(AIndex);
     C:= i + 1;
     S:= FColumnValues[i, AIndex];
-    if S=EmptyStr then
+    if TSheetColumnType(FColumnTypes[i])=ctOrder then
+      FWriter.WriteNumber(R, C, AIndex+1, cbtOuter)
+    else if S=EmptyStr then
       FWriter.WriteText(R, C, S, cbtOuter)
     else begin
       case TSheetColumnType(FColumnTypes[i]) of
@@ -383,6 +388,14 @@ begin
   MAppend(FColumnValues, nil);
 end;
 
+procedure TSheetTable.SetColumnOrder(const AName: String);
+var
+  ColIndex: Integer;
+begin
+  ColIndex:= VIndexOf(FColumnNames, AName);
+  SetColumnOrder(ColIndex);
+end;
+
 procedure TSheetTable.SetColumnInteger(const AName: String; const AValues: TIntVector);
 var
   ColIndex: Integer;
@@ -416,6 +429,12 @@ var
 begin
   ColIndex:= VIndexOf(FColumnNames, AName);
   SetColumnTime(ColIndex, AValues, AFormatString);
+end;
+
+procedure TSheetTable.SetColumnOrder(const AColIndex: Integer);
+begin
+  if not IsColIndexCorrect(AColIndex) then Exit;
+  FColumnTypes[AColIndex]:= Ord(ctOrder);
 end;
 
 procedure TSheetTable.SetColumnInteger(const AColIndex: Integer; const AValues: TIntVector);
@@ -466,24 +485,39 @@ begin
 end;
 
 procedure TSheetTable.Select(const ARow: Integer);
-begin
-  //unselect
-  if IsSelected then
+var
+  NewSelectedIndex: Integer;
+
+  procedure DoUnselect;
   begin
-    DrawLine(FSelectedIndex, False);
-    FSelectedIndex:= -1;
+    if IsSelected then
+    begin
+      DrawLine(FSelectedIndex, False);
+      FSelectedIndex:= -1;
+    end;
   end;
-  //select
-  FSelectedIndex:= LineIndexFromRow(ARow);
-  if FSelectedIndex>=0 then
-    DrawLine(FSelectedIndex, True);
+
+begin
+  if ARow<0 then
+    DoUnselect
+  else begin
+    NewSelectedIndex:= LineIndexFromRow(ARow);
+    if (NewSelectedIndex>=0) and (NewSelectedIndex<>FSelectedIndex) then
+    begin
+      //unselect
+      DoUnselect;
+      //select
+      FSelectedIndex:= NewSelectedIndex;
+      DrawLine(FSelectedIndex, True);
+    end;
+  end;
 
   if Assigned(FOnSelect) then FOnSelect;
 end;
 
 procedure TSheetTable.Unselect;
 begin
-  Select(0);
+  Select(-1);
 end;
 
 end.
