@@ -78,11 +78,6 @@ type
     procedure SetCellSettings(const ARow1, ACol1, ARow2, ACol2, ARowHeight: Integer;
                               const AWordWrap: Boolean; const ABordersType: TCellBorderType);
 
-
-    function WidthToGrid(const AValue: Integer): Integer;
-    function WidthToSheet(const AValue: Integer): Integer;
-    function HeightToGrid(const AValue: Integer): Integer;
-    function HeightToSheet(const AValue: Integer): Integer;
     procedure SetWidth(const ACol, AValue: Integer);
     procedure SetHeight(const ARow, AValue: Integer);
 
@@ -455,42 +450,23 @@ begin
   Result:= Ceil(AValue*FWorksheet.ZoomFactor);
 end;
 
-function TSheetWriter.WidthToGrid(const AValue: Integer): Integer;
-begin
-  Result:= AValue;
-end;
-
-function TSheetWriter.WidthToSheet(const AValue: Integer): Integer;
-begin
-  Result:= AValue;
-end;
-
-function TSheetWriter.HeightToGrid(const AValue: Integer): Integer;
-begin
-  Result:= HeightFromDefaultToScreen(HeightToSheet(AValue));
-end;
-
-function TSheetWriter.HeightToSheet(const AValue: Integer): Integer;
-begin
-  Result:= ApplyZoom(AValue);
-end;
-
 procedure TSheetWriter.SetWidth(const ACol, AValue: Integer);
 begin
   FColWidths[ACol]:= AValue;
   if HasGrid then
-    FGrid.ColWidths[ACol]:= WidthToGrid(AValue);
-  //FWorksheet.WriteColWidth(ACol, WidthPxToPt(WidthToSheet(AValue)), suChars);
-  FWorksheet.WriteColWidth(ACol, PixelToMillimeter(WidthToSheet(AValue)), suMillimeters);
+    FGrid.ColWidths[ACol]:= AValue;
+  FWorksheet.WriteColWidth(ACol, PixelToMillimeter(AValue), suMillimeters);
 end;
 
 procedure TSheetWriter.SetHeight(const ARow, AValue: Integer);
+var
+  H: Integer;
 begin
-  FRowHeights[ARow]:= AValue;
+  FRowHeights[ARow]:= AValue; // AValue is Height for default PPI=96
+  H:= ApplyZoom(AValue);      // Height for current sheet zoom factor
   if HasGrid then
-    FGrid.RowHeights[ARow]:= HeightToGrid(AValue);
-  //FWorksheet.WriteRowHeight(ARow, HeightPxToPt(HeightToSheet(AValue-2{!})), suLines);
-  FWorksheet.WriteRowHeight(ARow, PixelToMillimeter(HeightToSheet(AValue)), suMillimeters);
+    FGrid.RowHeights[ARow]:= HeightFromDefaultToScreen(H); //Height for current Screen PPI
+  FWorksheet.WriteRowHeight(ARow, PixelToMillimeter(H), suMillimeters);
 end;
 
 procedure TSheetWriter.SetLineHeight(const ARow, AHeight: Integer; const AMinValue: Integer = ROW_HEIGHT_DEFAULT);
@@ -799,7 +775,7 @@ begin
   CellIndex(ARow1, ACol1, ARow2, ACol2);
   SetCellSettings(ARow1, ACol1, ARow2, ACol2, ROW_HEIGHT_DEFAULT, False, ABordersType);
   if AFormatString=EmptyStr then
-    AFormatString:= 'hh:mm:ss';
+    AFormatString:= 'hh:nn:ss';
   FWorksheet.WriteDateTime(ARow1, ACol1, AValue, AFormatString);
 end;
 
@@ -815,7 +791,7 @@ begin
   CellIndex(ARow1, ACol1, ARow2, ACol2);
   SetCellSettings(ARow1, ACol1, ARow2, ACol2, ROW_HEIGHT_DEFAULT, False, ABordersType);
   if AFormatString=EmptyStr then
-    AFormatString:= 'dd.mm.yyyy hh:mm:ss';
+    AFormatString:= 'dd.mm.yyyy hh:nn:ss';
   FWorksheet.WriteDateTime(ARow1, ACol1, AValue, AFormatString);
 end;
 
@@ -860,7 +836,7 @@ begin
   //else
     BreakSymbol:= ' ';
   CellWidth:= ColsWidth(ACol1, ACol2);
-  CellWidth:= HeightFromDefaultToScreen(CellWidth);
+  CellWidth:= WidthFromDefaultToScreen(CellWidth);
   Font:= TFont.Create;
   Font.Name:= FFontName;
   Font.Size:= Round(FFontSize);
