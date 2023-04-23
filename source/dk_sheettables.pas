@@ -38,6 +38,8 @@ type
     function GetHeaderRowBegin: Integer;
     function GetHeaderRowEnd: Integer;
     function GetIsSelected: Boolean;
+    function GetValuesRowBegin: Integer;
+    function GetValuesRowEnd: Integer;
     procedure MouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
   protected
@@ -84,26 +86,39 @@ type
     FRowAfterVertAlignment: TsVertAlignment;
     FRowAfterBorderType: TCellBorderType;
 
+    FExtraFontNames: TStrVector;
+    FExtraFontSizes: TIntVector;
+    FExtraFontStyles: array of TFontStyles;
+    FExtraFontColors: TColorVector;
+    FExtraFontColumnNames: TStrVector;
+    FExtraFontIfColumnNames: TStrVector;
+    FExtraFontIfColumnValues: TStrVector;
+
     procedure DrawHeader;
     procedure FreezeHeader;
 
     procedure PrepareData;
     procedure DrawData;
     procedure DrawLine(const AIndex: Integer; const ASelected: Boolean);
-    procedure DrawRowAddition(const AFont: TFont; const AValue: String;
-                        const AHorAlignment: TsHorAlignment;
-                        const AVertAlignment: TsVertAlignment;
-                        const ABGColor: TColor;
-                        const ABorderType: TCellBorderType);
+    procedure DrawRowBefore;
+    procedure DrawRowAfter;
 
     function LineIndexFromRow(const ARow: Integer): Integer;
     function RowFromLineIndex(const AIndex: Integer): Integer;
     function IsLineIndexCorrect(const AIndex: Integer): Boolean;
 
     function IsColIndexCorrect(const AIndex: Integer): Boolean;
+
+    function ColumnIndexByName(const AName: String): Integer;
   public
     constructor Create(const AGrid: TsWorksheetGrid);
     destructor  Destroy; override;
+
+    procedure SetExtraFont(const AColumnName, AIfColumnName, AIfColumnValue: String;
+                        const AFontName: String;
+                        const AFontSize: Integer;
+                        const AFontStyles: TFontStyles;
+                        const AFontColor: TColor);
 
     procedure AddToHeader(const ARow, ACol: Integer;
                           const ACaption: String;
@@ -173,6 +188,9 @@ type
     property IsSelected: Boolean read GetIsSelected;
     property SelectedIndex: Integer read FSelectedIndex;
 
+    property ValuesRowBegin: Integer read GetValuesRowBegin;
+    property ValuesRowEnd: Integer read GetValuesRowEnd;
+
     property HeaderRowBegin: Integer read GetHeaderRowBegin;
     property HeaderRowEnd: Integer read GetHeaderRowEnd;
     property HeaderFrozen: Boolean read FHeaderFrozen write FHeaderFrozen;
@@ -202,6 +220,20 @@ end;
 function TSheetTable.GetIsSelected: Boolean;
 begin
   Result:= FSelectedIndex>=0;
+end;
+
+function TSheetTable.GetValuesRowBegin: Integer;
+begin
+  Result:= 0;
+  if MIsNil(FColumnValues) or VIsNil(FColumnValues[0]) then Exit;
+  Result:= HeaderRowEnd + 1;
+end;
+
+function TSheetTable.GetValuesRowEnd: Integer;
+begin
+  Result:= 0;
+  if MIsNil(FColumnValues) or VIsNil(FColumnValues[0]) then Exit;
+  Result:= HeaderRowEnd + Length(FColumnValues[0]);
 end;
 
 procedure TSheetTable.MouseDown(Sender: TObject; Button: TMouseButton;
@@ -239,25 +271,55 @@ procedure TSheetTable.DrawLine(const AIndex: Integer; const ASelected: Boolean);
 var
   i, R, C: Integer;
   S: String;
-begin
-  if ASelected then
+
+  procedure SetBGColor(const AColumnIndex: Integer);
   begin
-    FWriter.SetFont(FSelectedFont);
-    FWriter.SetBackground(FSelectedBGColor);
-  end
-  else begin
-    FWriter.SetFont(FValuesFont);
+    if ASelected then
+      FWriter.SetBackground(FSelectedBGColor)
+    else if FColumnValuesBGColors[AColumnIndex]<>clNone then
+      FWriter.SetBackground(FColumnValuesBGColors[AColumnIndex])
+    else
+      FWriter.SetBackground(FValuesBGColor);
   end;
 
+  function ExtraFont(const AColumnIndex: Integer): Boolean;
+  var
+    k, Ind: Integer;
+    ThisColumnName: String;
+  begin
+    Result:= False;
+
+    ThisColumnName:= FColumnNames[AColumnIndex];
+    //пробегаем по всем именам столбцов с доп шрифтами
+    for k:=0 to High(FExtraFontColumnNames) do
+    begin
+      if FExtraFontColumnNames[k]<>ThisColumnName then continue;
+      //индекс столбца, по которому опредяем соблюдение условия
+      Ind:= ColumnIndexByName(FExtraFontIfColumnNames[k]);
+      //проверяем соблюдение условия
+      if FExtraFontIfColumnValues[k]=FColumnValues[Ind, AIndex] then
+      begin //если есть - меняем шрфит
+        FWriter.SetFont(FExtraFontNames[k], FExtraFontSizes[k],
+                        FExtraFontStyles[k], FExtraFontColors[k]);
+        Result:= True;
+      end;
+    end;
+  end;
+
+  procedure SetFont(const AColumnIndex: Integer);
+  begin
+    if ExtraFont(AColumnIndex) then Exit;
+    if ASelected then
+      FWriter.SetFont(FSelectedFont)
+    else
+      FWriter.SetFont(FValuesFont);
+  end;
+
+begin
   for i:= 0 to High(FColumnValues) do
   begin
-    if not ASelected then
-    begin
-      if FColumnValuesBGColors[i]<>clNone then
-        FWriter.SetBackground(FColumnValuesBGColors[i])
-      else
-        FWriter.SetBackground(FValuesBGColor);
-    end;
+    SetBGColor(i);
+    SetFont(i);
     FWriter.SetAlignment(TsHorAlignment(FColumnHorAlignments[i]),
                          TsVertAlignment(FColumnVertAlignments[i]));
     R:= RowFromLineIndex(AIndex);
@@ -279,20 +341,33 @@ begin
   end;
 end;
 
-procedure TSheetTable.DrawRowAddition(const AFont: TFont; const AValue: String;
-                        const AHorAlignment: TsHorAlignment;
-                        const AVertAlignment: TsVertAlignment;
-                        const ABGColor: TColor;
-                        const ABorderType: TCellBorderType);
+procedure TSheetTable.DrawRowBefore;
 begin
-  if AValue=EmptyStr then Exit;
-  FWriter.SetFont(AFont);
-  FWriter.SetAlignment(AHorAlignment, AVertAlignment);
-  if ABGColor<>clNone then
-    FWriter.SetBackground(ABGColor)
+  if FRowBeforeValue=EmptyStr then Exit;
+  FWriter.SetFont(FRowBeforeFont);
+  FWriter.SetAlignment(FRowBeforeHorAlignment, FRowBeforeVertAlignment);
+  if FRowBeforeBGColor<>clNone then
+    FWriter.SetBackground(FRowBeforeBGColor)
   else
     FWriter.SetBackground(FValuesBGColor);
-  FWriter.WriteText(1, 1, 1, FWriter.ColCount, AValue, ABorderType, True, True);
+  FWriter.WriteText(1, 1, 1, FWriter.ColCount,
+                    FRowBeforeValue, FRowBeforeBorderType, True, True);
+end;
+
+procedure TSheetTable.DrawRowAfter;
+var
+  R: Integer;
+begin
+  if FRowAfterValue=EmptyStr then Exit;
+  FWriter.SetFont(FRowAfterFont);
+  FWriter.SetAlignment(FRowAfterHorAlignment, FRowAfterVertAlignment);
+  if FRowAfterBGColor<>clNone then
+    FWriter.SetBackground(FRowAfterBGColor)
+  else
+    FWriter.SetBackground(FValuesBGColor);
+  R:= ValuesRowEnd + 1;
+  FWriter.WriteText(R, 1, R, FWriter.ColCount,
+                   FRowAfterValue, FRowAfterBorderType, True, True);
 end;
 
 function TSheetTable.LineIndexFromRow(const ARow: Integer): Integer;
@@ -320,10 +395,18 @@ begin
   Result:= (AIndex>=0) and (AIndex<=High(FColumnNames));
 end;
 
+function TSheetTable.ColumnIndexByName(const AName: String): Integer;
+begin
+  Result:= VIndexOf(FColumnNames, AName);
+end;
+
 procedure TSheetTable.PrepareData;
 var
   i, MaxLength: Integer;
 begin
+  for i:= 0 to High(FColumnTypes) do
+    if TSheetColumnType(FColumnTypes[i])=ctOrder then
+      FColumnValues[i]:= nil;
   MaxLength:= MMaxLength(FColumnValues);
   for i:= 0 to High(FColumnValues) do
     if Length(FColumnValues[i])<MaxLength then
@@ -373,6 +456,23 @@ begin
   FreeAndNil(FRowAfterFont);
   if Assigned(FWriter) then FreeAndNil(FWriter);
   inherited Destroy;
+end;
+
+procedure TSheetTable.SetExtraFont(
+                        const AColumnName, AIfColumnName, AIfColumnValue: String;
+                        const AFontName: String;
+                        const AFontSize: Integer;
+                        const AFontStyles: TFontStyles;
+                        const AFontColor: TColor);
+begin
+  VAppend(FExtraFontNames, AFontName);
+  VAppend(FExtraFontSizes, AFontSize);
+  SetLength(FExtraFontStyles, Length(FExtraFontStyles)+1);
+  FExtraFontStyles[High(FExtraFontStyles)]:= AFontStyles;
+  VAppend(FExtraFontColors, AFontColor);
+  VAppend(FExtraFontColumnNames, AColumnName);
+  VAppend(FExtraFontIfColumnNames, AIfColumnName);
+  VAppend(FExtraFontIfColumnValues, AIfColumnValue);
 end;
 
 procedure TSheetTable.AddToHeader(const ARow, ACol: Integer;
@@ -443,46 +543,31 @@ begin
 end;
 
 procedure TSheetTable.SetColumnOrder(const AName: String);
-var
-  ColIndex: Integer;
 begin
-  ColIndex:= VIndexOf(FColumnNames, AName);
-  SetColumnOrder(ColIndex);
+  SetColumnOrder(ColumnIndexByName(AName));
 end;
 
 procedure TSheetTable.SetColumnInteger(const AName: String; const AValues: TIntVector);
-var
-  ColIndex: Integer;
 begin
-  ColIndex:= VIndexOf(FColumnNames, AName);
-  SetColumnInteger(ColIndex, AValues);
+  SetColumnInteger(ColumnIndexByName(AName), AValues);
 end;
 
 procedure TSheetTable.SetColumnString(const AName: String; const AValues: TStrVector);
-var
-  ColIndex: Integer;
 begin
-  ColIndex:= VIndexOf(FColumnNames, AName);
-  SetColumnString(ColIndex, AValues);
+  SetColumnString(ColumnIndexByName(AName), AValues);
 end;
 
 procedure TSheetTable.SetColumnDate(const AName: String; const AValues: TDateVector;
                                     const AFormatString: String = 'dd.mm.yyyy';
                                     const ABoundaryIsEmpty: Boolean = True);
-var
-  ColIndex: Integer;
 begin
-  ColIndex:= VIndexOf(FColumnNames, AName);
-  SetColumnDate(ColIndex, AValues, AFormatString, ABoundaryIsEmpty);
+  SetColumnDate(ColumnIndexByName(AName), AValues, AFormatString, ABoundaryIsEmpty);
 end;
 
 procedure TSheetTable.SetColumnTime(const AName: String; const AValues: TTimeVector;
                                     const AFormatString: String = 'hh:nn');
-var
-  ColIndex: Integer;
 begin
-  ColIndex:= VIndexOf(FColumnNames, AName);
-  SetColumnTime(ColIndex, AValues, AFormatString);
+  SetColumnTime(ColumnIndexByName(AName), AValues, AFormatString);
 end;
 
 procedure TSheetTable.SetColumnOrder(const AColIndex: Integer);
@@ -555,20 +640,17 @@ end;
 
 procedure TSheetTable.Draw;
 begin
+  FGrid.Clear;
   FSelectedIndex:= -1;
 
   if Assigned(FWriter) then FreeAndNil(FWriter);
   FWriter:= TSheetWriter.Create(FColumnWidths, FGrid.Worksheet, FGrid);
   FWriter.BeginEdit;
 
-  DrawRowAddition(FRowBeforeFont, FRowBeforeValue,
-                  FRowBeforeHorAlignment, FRowBeforeVertAlignment,
-                  FRowBeforeBGColor, FRowBeforeBorderType);
+  DrawRowBefore;
   DrawHeader;
   DrawData;
-  DrawRowAddition(FRowAfterFont, FRowAfterValue,
-                  FRowAfterHorAlignment, FRowAfterVertAlignment,
-                  FRowAfterBGColor, FRowAfterBorderType);
+  DrawRowAfter;
   FreezeHeader;
 
   FWriter.EndEdit;
