@@ -41,7 +41,9 @@ type
     function GetValuesRowBegin: Integer;
     function GetValuesRowEnd: Integer;
     procedure MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+      {%H-}Shift: TShiftState; X, Y: Integer);
+    procedure SetCanSelect(AValue: Boolean);
+    procedure SetCanUnselect(AValue: Boolean);
   protected
     FOnSelect: TSheetSelectEvent;
 
@@ -93,6 +95,9 @@ type
     FExtraFontColumnNames: TStrVector;
     FExtraFontIfColumnNames: TStrVector;
     FExtraFontIfColumnValues: TStrVector;
+
+    FCanSelect: Boolean;
+    FCanUnselect: Boolean;
 
     procedure DrawHeader;
     procedure FreezeHeader;
@@ -195,6 +200,9 @@ type
     property HeaderRowEnd: Integer read GetHeaderRowEnd;
     property HeaderFrozen: Boolean read FHeaderFrozen write FHeaderFrozen;
 
+    property CanSelect: Boolean read FCanSelect write SetCanSelect;
+    property CanUnselect: Boolean read FCanUnselect write SetCanUnselect;
+
     property OnSelect: TSheetSelectEvent read FOnSelect write FOnSelect;
   end;
 
@@ -241,13 +249,29 @@ procedure TSheetTable.MouseDown(Sender: TObject; Button: TMouseButton;
 var
   R,C: Integer;
 begin
+  if not CanSelect then Exit;
+
   if Button=mbLeft then
   begin
     (Sender as TsWorksheetGrid).MouseToCell(X,Y,C,R);
     Select(R);
   end
   else if Button=mbRight then
-    Unselect;
+    if CanUnselect then
+      Unselect;
+end;
+
+procedure TSheetTable.SetCanSelect(AValue: Boolean);
+begin
+  if FCanSelect=AValue then Exit;
+  if not AValue then Unselect;
+  FCanSelect:= AValue;
+end;
+
+procedure TSheetTable.SetCanUnselect(AValue: Boolean);
+begin
+  if FCanUnselect=AValue then Exit;
+  FCanUnselect:= AValue;
 end;
 
 procedure TSheetTable.DrawHeader;
@@ -445,6 +469,10 @@ begin
   FRowAfterBGColor:= FValuesBGColor;
 
   FHeaderFrozen:= True;
+  FCanSelect:= True;
+  FCanUnselect:= True;
+
+  FSelectedIndex:= -1;
 end;
 
 destructor TSheetTable.Destroy;
@@ -670,7 +698,7 @@ var
   end;
 
 begin
-  if ARow<0 then
+  if (ARow<0) then //unselect only
     DoUnselect
   else begin
     NewSelectedIndex:= LineIndexFromRow(ARow);
