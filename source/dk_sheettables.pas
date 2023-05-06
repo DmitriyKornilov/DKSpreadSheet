@@ -5,8 +5,8 @@ unit DK_SheetTables;
 interface
 
 uses
-  Classes, SysUtils, Graphics, Controls, fpsTypes,
-  fpspreadsheetgrid, DK_Const, DK_Vector, DK_Matrix, DK_SheetWriter;
+  Classes, SysUtils, Graphics, Controls, fpsTypes, fpspreadsheetgrid,
+  DK_Const, DK_Vector, DK_Matrix, DK_StrUtils,  DK_SheetWriter;
 
 const
   haLeft   = fpsTypes.haLeft;
@@ -37,6 +37,7 @@ type
   private
     function GetHeaderRowBegin: Integer;
     function GetHeaderRowEnd: Integer;
+    function GetIsEmpty: Boolean;
     function GetIsSelected: Boolean;
     function GetValuesRowBegin: Integer;
     function GetValuesRowEnd: Integer;
@@ -50,6 +51,7 @@ type
     FGrid: TsWorksheetGrid;
     FWriter: TSheetWriter;
     FSelectedIndex: Integer;
+    FIsEmptyDraw: Boolean;
 
     FValuesFont: TFont;
     FHeaderFont: TFont;
@@ -188,6 +190,10 @@ type
 
 
     procedure Draw;
+    property IsEmptyDraw: Boolean read FIsEmptyDraw write FIsEmptyDraw;
+    property IsEmpty: Boolean read GetIsEmpty;
+
+
     procedure Select(const ARow: Integer);
     procedure Unselect;
     property IsSelected: Boolean read GetIsSelected;
@@ -199,6 +205,7 @@ type
     property HeaderRowBegin: Integer read GetHeaderRowBegin;
     property HeaderRowEnd: Integer read GetHeaderRowEnd;
     property HeaderFrozen: Boolean read FHeaderFrozen write FHeaderFrozen;
+
 
     property CanSelect: Boolean read FCanSelect write SetCanSelect;
     property CanUnselect: Boolean read FCanUnselect write SetCanUnselect;
@@ -213,16 +220,21 @@ implementation
 
 function TSheetTable.GetHeaderRowBegin: Integer;
 begin
-  Result:= 0;
+  Result:= Ord(not SEmpty(FRowBeforeValue));
   if VIsNil(FHeaderRows1) then Exit;
   Result:= VMin(FHeaderRows1);
 end;
 
 function TSheetTable.GetHeaderRowEnd: Integer;
 begin
-  Result:= 0;
+  Result:= HeaderRowBegin;
   if VIsNil(FHeaderRows2) then Exit;
   Result:= VMin(FHeaderRows2);
+end;
+
+function TSheetTable.GetIsEmpty: Boolean;
+begin
+  Result:= MIsNil(FColumnValues) or VIsNil(FColumnValues[0]);
 end;
 
 function TSheetTable.GetIsSelected: Boolean;
@@ -232,16 +244,16 @@ end;
 
 function TSheetTable.GetValuesRowBegin: Integer;
 begin
-  Result:= 0;
-  if MIsNil(FColumnValues) or VIsNil(FColumnValues[0]) then Exit;
-  Result:= HeaderRowEnd + 1;
+  Result:= HeaderRowEnd;
+  if IsEmpty then Exit;
+  Result:= Result + 1;
 end;
 
 function TSheetTable.GetValuesRowEnd: Integer;
 begin
-  Result:= 0;
-  if MIsNil(FColumnValues) or VIsNil(FColumnValues[0]) then Exit;
-  Result:= HeaderRowEnd + Length(FColumnValues[0]);
+  Result:= ValuesRowBegin;
+  if IsEmpty then Exit;
+  Result:= Result + Length(FColumnValues[0]) - 1;
 end;
 
 procedure TSheetTable.MouseDown(Sender: TObject; Button: TMouseButton;
@@ -351,7 +363,7 @@ begin
     S:= FColumnValues[i, AIndex];
     if TSheetColumnType(FColumnTypes[i])=ctOrder then
       FWriter.WriteNumber(R, C, AIndex+1, cbtOuter)
-    else if S=EmptyStr then
+    else if SEmpty(S) then
       FWriter.WriteText(R, C, S, cbtOuter)
     else begin
       case TSheetColumnType(FColumnTypes[i]) of
@@ -367,7 +379,7 @@ end;
 
 procedure TSheetTable.DrawRowBefore;
 begin
-  if FRowBeforeValue=EmptyStr then Exit;
+  if SEmpty(FRowBeforeValue) then Exit;
   FWriter.SetFont(FRowBeforeFont);
   FWriter.SetAlignment(FRowBeforeHorAlignment, FRowBeforeVertAlignment);
   if FRowBeforeBGColor<>clNone then
@@ -382,7 +394,7 @@ procedure TSheetTable.DrawRowAfter;
 var
   R: Integer;
 begin
-  if FRowAfterValue=EmptyStr then Exit;
+  if SEmpty(FRowAfterValue) then Exit;
   FWriter.SetFont(FRowAfterFont);
   FWriter.SetAlignment(FRowAfterHorAlignment, FRowAfterVertAlignment);
   if FRowAfterBGColor<>clNone then
@@ -441,7 +453,6 @@ procedure TSheetTable.DrawData;
 var
   i: Integer;
 begin
-  PrepareData;
   for i:= 0 to High(FColumnValues[0]) do
     DrawLine(i, False);
 end;
@@ -668,7 +679,10 @@ end;
 
 procedure TSheetTable.Draw;
 begin
+  PrepareData;
   FGrid.Clear;
+
+  if IsEmpty and (not IsEmptyDraw) then Exit;
   FSelectedIndex:= -1;
 
   if Assigned(FWriter) then FreeAndNil(FWriter);
