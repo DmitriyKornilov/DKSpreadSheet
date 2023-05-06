@@ -101,10 +101,9 @@ type
     FCanSelect: Boolean;
     FCanUnselect: Boolean;
 
-    procedure DrawHeader;
-    procedure FreezeHeader;
-
     procedure PrepareData;
+    procedure FreezeHeader;
+    procedure DrawHeader;
     procedure DrawData;
     procedure DrawLine(const AIndex: Integer; const ASelected: Boolean);
     procedure DrawRowBefore;
@@ -375,6 +374,9 @@ begin
       end;
     end;
   end;
+
+  if IsEmpty then Exit;
+  FWriter.DrawBorders(ValuesRowBegin, 1, ValuesRowEnd, FWriter.ColCount, cbtAll);
 end;
 
 procedure TSheetTable.DrawRowBefore;
