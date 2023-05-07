@@ -41,10 +41,12 @@ type
     function GetIsSelected: Boolean;
     function GetValuesRowBegin: Integer;
     function GetValuesRowEnd: Integer;
-    procedure MouseDown(Sender: TObject; Button: TMouseButton;
-      {%H-}Shift: TShiftState; X, Y: Integer);
+
     procedure SetCanSelect(AValue: Boolean);
     procedure SetCanUnselect(AValue: Boolean);
+
+    procedure MouseDown(Sender: TObject; Button: TMouseButton;
+      {%H-}Shift: TShiftState; X, Y: Integer);
   protected
     FOnSelect: TSheetSelectEvent;
 
@@ -205,7 +207,6 @@ type
     property HeaderRowEnd: Integer read GetHeaderRowEnd;
     property HeaderFrozen: Boolean read FHeaderFrozen write FHeaderFrozen;
 
-
     property CanSelect: Boolean read FCanSelect write SetCanSelect;
     property CanUnselect: Boolean read FCanUnselect write SetCanUnselect;
 
@@ -228,7 +229,7 @@ function TSheetTable.GetHeaderRowEnd: Integer;
 begin
   Result:= HeaderRowBegin;
   if VIsNil(FHeaderRows2) then Exit;
-  Result:= VMin(FHeaderRows2);
+  Result:= VMax(FHeaderRows2);
 end;
 
 function TSheetTable.GetIsEmpty: Boolean;
