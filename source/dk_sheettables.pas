@@ -103,6 +103,8 @@ type
     FCanSelect: Boolean;
     FCanUnselect: Boolean;
 
+    FZoomPercents: Integer;
+
     procedure PrepareData;
     procedure FreezeHeader;
     procedure DrawHeader;
@@ -121,6 +123,7 @@ type
   public
     constructor Create(const AGrid: TsWorksheetGrid);
     destructor  Destroy; override;
+    procedure Zoom(const APercents: Integer);
 
     procedure SetExtraFont(const AColumnName, AIfColumnName, AIfColumnValue: String;
                         const AFontName: String;
@@ -194,8 +197,8 @@ type
     property IsEmptyDraw: Boolean read FIsEmptyDraw write FIsEmptyDraw;
     property IsEmpty: Boolean read GetIsEmpty;
 
-
-    procedure Select(const ARow: Integer);
+    procedure SelectIndex(const AIndex: Integer);
+    procedure SelectRow(const ARow: Integer);
     procedure Unselect;
     property IsSelected: Boolean read GetIsSelected;
     property SelectedIndex: Integer read FSelectedIndex;
@@ -266,7 +269,7 @@ begin
   if Button=mbLeft then
   begin
     (Sender as TsWorksheetGrid).MouseToCell(X,Y,C,R);
-    Select(R);
+    SelectRow(R);
   end
   else if Button=mbRight then
     if CanUnselect then
@@ -414,6 +417,7 @@ var
   i: Integer;
 begin
   Result:= -1;
+  if ARow<0 then Exit;
   i:= ARow - GetHeaderRowEnd - 1;
   if IsLineIndexCorrect(i) then
     Result:= i;
@@ -485,6 +489,7 @@ begin
   FHeaderFrozen:= True;
   FCanSelect:= True;
   FCanUnselect:= True;
+  FZoomPercents:= 100;
 
   FSelectedIndex:= -1;
 end;
@@ -498,6 +503,11 @@ begin
   FreeAndNil(FRowAfterFont);
   if Assigned(FWriter) then FreeAndNil(FWriter);
   inherited Destroy;
+end;
+
+procedure TSheetTable.Zoom(const APercents: Integer);
+begin
+  FZoomPercents:= APercents;
 end;
 
 procedure TSheetTable.SetExtraFont(
@@ -690,6 +700,10 @@ begin
 
   if Assigned(FWriter) then FreeAndNil(FWriter);
   FWriter:= TSheetWriter.Create(FColumnWidths, FGrid.Worksheet, FGrid);
+
+  FWriter.SetZoom(FZoomPercents);
+  FGrid.ZoomFactor:= FZoomPercents/100;
+
   FWriter.BeginEdit;
 
   DrawRowBefore;
@@ -701,40 +715,71 @@ begin
   FWriter.EndEdit;
 end;
 
-procedure TSheetTable.Select(const ARow: Integer);
-var
-  NewSelectedIndex: Integer;
+procedure TSheetTable.SelectIndex(const AIndex: Integer);
 
   procedure DoUnselect;
   begin
-    if IsSelected then
-    begin
-      DrawLine(FSelectedIndex, False);
-      FSelectedIndex:= -1;
-    end;
+    if not IsSelected then  Exit;
+    DrawLine(FSelectedIndex, False);
+    FSelectedIndex:= -1;
   end;
 
 begin
-  if (ARow<0) then //unselect only
+  if (AIndex<0) then //unselect only
     DoUnselect
   else begin
-    NewSelectedIndex:= LineIndexFromRow(ARow);
-    if (NewSelectedIndex>=0) and (NewSelectedIndex<>FSelectedIndex) then
+    if (AIndex>=0) and (AIndex<>FSelectedIndex) then
     begin
       //unselect
       DoUnselect;
-      //select
-      FSelectedIndex:= NewSelectedIndex;
+      //SelectRow
+      FSelectedIndex:= AIndex;
+      FGrid.Row:= RowFromLineIndex(FSelectedIndex); //show
       DrawLine(FSelectedIndex, True);
     end;
   end;
 
   if Assigned(FOnSelect) then FOnSelect;
+
+end;
+
+procedure TSheetTable.SelectRow(const ARow: Integer);
+var
+  NewSelectedIndex: Integer;
+
+  //procedure DoUnselect;
+  //begin
+  //  if IsSelected then
+  //  begin
+  //    DrawLine(FSelectedIndex, False);
+  //    FSelectedIndex:= -1;
+  //  end;
+  //end;
+
+begin
+  NewSelectedIndex:= LineIndexFromRow(ARow);
+  SelectIndex(NewSelectedIndex);
+
+  //if (ARow<0) then //unselect only
+  //  DoUnselect
+  //else begin
+  //  NewSelectedIndex:= LineIndexFromRow(ARow);
+  //  if (NewSelectedIndex>=0) and (NewSelectedIndex<>FSelectedIndex) then
+  //  begin
+  //    //unselect
+  //    DoUnselect;
+  //    //SelectRow
+  //    FSelectedIndex:= NewSelectedIndex;
+  //    DrawLine(FSelectedIndex, True);
+  //  end;
+  //end;
+  //
+  //if Assigned(FOnSelect) then FOnSelect;
 end;
 
 procedure TSheetTable.Unselect;
 begin
-  Select(-1);
+  SelectIndex(-1);
 end;
 
 end.
