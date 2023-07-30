@@ -6,7 +6,8 @@ interface
 
 uses
   Classes, SysUtils, Graphics, Controls, fpsTypes, fpspreadsheetgrid,
-  DK_Const, DK_Vector, DK_Matrix, DK_StrUtils,  DK_SheetWriter;
+  DK_Const, DK_Vector, DK_Matrix, DK_StrUtils,  DK_SheetWriter,
+  DK_SheetExporter;
 
 const
   haLeft   = fpsTypes.haLeft;
@@ -35,6 +36,7 @@ type
 
   TSheetTable = class(TObject)
   private
+    function GetColumnVisible(const ACol: Integer): Boolean;
     function GetHeaderRowBegin: Integer;
     function GetHeaderRowEnd: Integer;
     function GetIsEmpty: Boolean;
@@ -42,11 +44,14 @@ type
     function GetValuesRowBegin: Integer;
     function GetValuesRowEnd: Integer;
 
+    procedure SetColumnVisibles;
+    procedure SetColumnVisible(const ACol: Integer; AValue: Boolean);
     procedure SetCanSelect(AValue: Boolean);
     procedure SetCanUnselect(AValue: Boolean);
 
     procedure MouseDown(Sender: TObject; Button: TMouseButton;
       {%H-}Shift: TShiftState; X, Y: Integer);
+
   protected
     FOnSelect: TSheetSelectEvent;
 
@@ -74,6 +79,7 @@ type
     FColumnHorAlignments, FColumnVertAlignments: TIntVector;
     FColumnValues: TStrMatrix;
     FColumnValuesBGColors: TColorVector;
+    FColumnVisibles: TBoolVector;
 
     FHeaderFrozen: Boolean;
     FHeaderRows1, FHeaderRows2: TIntVector;
@@ -180,6 +186,8 @@ type
     procedure SetFontsName(const AName: String);
     procedure SetFontsSize(const ASize: Integer);
 
+    property ColumnVisible[const ACol: Integer]: Boolean read GetColumnVisible write SetColumnVisible;
+
     property HeaderFont: TFont read FHeaderFont write FHeaderFont;
     property ValuesFont: TFont read FValuesFont write FValuesFont;
     property SelectedFont: TFont read FSelectedFont write FSelectedFont;
@@ -192,7 +200,7 @@ type
     property RowBeforeBGColor: TColor read FRowBeforeBGColor write FRowBeforeBGColor;
     property RowAfterBGColor: TColor read FRowAfterBGColor write FRowAfterBGColor;
 
-
+    procedure Save(const ADoneMessage: String);
     procedure Draw;
     property IsEmptyDraw: Boolean read FIsEmptyDraw write FIsEmptyDraw;
     property IsEmpty: Boolean read GetIsEmpty;
@@ -220,6 +228,15 @@ type
 implementation
 
 { TSheetTable }
+
+function TSheetTable.GetColumnVisible(const ACol: Integer): Boolean;
+var
+  Index: Integer;
+begin
+  Index:= ACol - 1;
+  if not IsColIndexCorrect(Index) then Exit;
+  Result:= FColumnVisibles[Index];
+end;
 
 function TSheetTable.GetHeaderRowBegin: Integer;
 begin
@@ -274,6 +291,33 @@ begin
   else if Button=mbRight then
     if CanUnselect then
       Unselect;
+end;
+
+procedure TSheetTable.SetColumnVisibles;
+var
+  i: Integer;
+begin
+  for i:= 0 to High(FColumnVisibles) do
+  begin
+    if FColumnVisibles[i] then
+      FGrid.ShowCol(i+1)
+    else
+      FGrid.HideCol(i+1);
+  end;
+end;
+
+procedure TSheetTable.SetColumnVisible(const ACol: Integer; AValue: Boolean);
+var
+  Index: Integer;
+begin
+  Index:= ACol - 1;
+  if not IsColIndexCorrect(Index) then Exit;
+  if FColumnVisibles[Index]=AValue then Exit;
+  FColumnVisibles[Index]:= AValue;
+  if AValue then
+    FGrid.ShowCol(Index+1)
+  else
+    FGrid.HideCol(Index+1);
 end;
 
 procedure TSheetTable.SetCanSelect(AValue: Boolean);
@@ -565,6 +609,7 @@ begin
   VAppend(FColumnHorAlignments, Ord(AHorAlignment));
   VAppend(FColumnVertAlignments, Ord(AVertAlignment));
   VAppend(FColumnValuesBGColors, ABGColor);
+  VAppend(FColumnVisibles, True);
   MAppend(FColumnValues, nil);
 end;
 
@@ -679,6 +724,22 @@ begin
   FRowAfterFont.Size:= ASize;
 end;
 
+procedure TSheetTable.Save(const ADoneMessage: String);
+var
+  Exporter: TGridExporter;
+begin
+  if IsSelected then
+    DrawLine(FSelectedIndex, False);
+  Exporter:= TGridExporter.Create(FGrid);
+  try
+    Exporter.Save(ADoneMessage);
+  finally
+    FreeAndNil(Exporter);
+  end;
+  if IsSelected then
+    DrawLine(FSelectedIndex, True);
+end;
+
 procedure TSheetTable.FreezeHeader;
 var
   N: Integer;
@@ -694,9 +755,9 @@ procedure TSheetTable.Draw;
 begin
   PrepareData;
   FGrid.Clear;
+  FSelectedIndex:= -1;
 
   if IsEmpty and (not IsEmptyDraw) then Exit;
-  FSelectedIndex:= -1;
 
   if Assigned(FWriter) then FreeAndNil(FWriter);
   FWriter:= TSheetWriter.Create(FColumnWidths, FGrid.Worksheet, FGrid);
@@ -713,6 +774,8 @@ begin
   FreezeHeader;
 
   FWriter.EndEdit;
+
+  SetColumnVisibles;
 end;
 
 procedure TSheetTable.SelectIndex(const AIndex: Integer);
@@ -740,41 +803,14 @@ begin
   end;
 
   if Assigned(FOnSelect) then FOnSelect;
-
 end;
 
 procedure TSheetTable.SelectRow(const ARow: Integer);
 var
   NewSelectedIndex: Integer;
-
-  //procedure DoUnselect;
-  //begin
-  //  if IsSelected then
-  //  begin
-  //    DrawLine(FSelectedIndex, False);
-  //    FSelectedIndex:= -1;
-  //  end;
-  //end;
-
 begin
   NewSelectedIndex:= LineIndexFromRow(ARow);
   SelectIndex(NewSelectedIndex);
-
-  //if (ARow<0) then //unselect only
-  //  DoUnselect
-  //else begin
-  //  NewSelectedIndex:= LineIndexFromRow(ARow);
-  //  if (NewSelectedIndex>=0) and (NewSelectedIndex<>FSelectedIndex) then
-  //  begin
-  //    //unselect
-  //    DoUnselect;
-  //    //SelectRow
-  //    FSelectedIndex:= NewSelectedIndex;
-  //    DrawLine(FSelectedIndex, True);
-  //  end;
-  //end;
-  //
-  //if Assigned(FOnSelect) then FOnSelect;
 end;
 
 procedure TSheetTable.Unselect;
