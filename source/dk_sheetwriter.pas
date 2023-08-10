@@ -85,6 +85,7 @@ type
     procedure SetNewRowHeight(const ARow, AHeight: Integer; const AMinValue: Integer = ROW_HEIGHT_DEFAULT);
 
     function CalcCellHeight(var AText: String; const ACol1, ACol2: Integer;
+                           const ADivideByHyphen: Boolean = True;
                            const AWrapToWordParts: Boolean = False;
                            const ARedStrWidth: Integer = 0): Integer;
     procedure SetGridRowCount(const ACount: Integer);
@@ -171,6 +172,7 @@ type
                         const ABordersType: TCellBorderType = cbtNone;
                         const AWordWrap: Boolean = True;
                         const AAutoHeight: Boolean = False;
+                        const ADivideByHyphen: Boolean = True;
                         const AWrapToWordParts: Boolean = False;
                         const ARedStrWidth: Integer = 0;
                         const ARichTextParams: TsRichTextParams = nil);
@@ -178,6 +180,7 @@ type
                         const ABordersType: TCellBorderType = cbtNone;
                         const AWordWrap: Boolean = True;
                         const AAutoHeight: Boolean = False;
+                        const ADivideByHyphen: Boolean = True;
                         const AWrapToWordParts: Boolean = False;
                         const ARedStrWidth: Integer = 0;
                         const ARichTextParams: TsRichTextParams = nil);
@@ -640,18 +643,20 @@ procedure TSheetWriter.WriteText(const ARow, ACol: Integer; const AValue: String
                         const ABordersType: TCellBorderType = cbtNone;
                         const AWordWrap: Boolean = True;
                         const AAutoHeight: Boolean = False;
+                        const ADivideByHyphen: Boolean = True;
                         const AWrapToWordParts: Boolean = False;
                         const ARedStrWidth: Integer = 0;
                         const ARichTextParams: TsRichTextParams = nil);
 begin
   WriteText(ARow, ACol, ARow, ACol, AValue, ABordersType, AWordWrap, AAutoHeight,
-            AWrapToWordParts, ARedStrWidth, ARichTextParams);
+            ADivideByHyphen, AWrapToWordParts, ARedStrWidth, ARichTextParams);
 end;
 
 procedure TSheetWriter.WriteText(ARow1, ACol1, ARow2, ACol2: Integer; AValue: String;
                         const ABordersType: TCellBorderType = cbtNone;
                         const AWordWrap: Boolean = True;
                         const AAutoHeight: Boolean = False;
+                        const ADivideByHyphen: Boolean = True;
                         const AWrapToWordParts: Boolean = False;
                         const ARedStrWidth: Integer = 0;
                         const ARichTextParams: TsRichTextParams = nil);
@@ -660,7 +665,7 @@ var
 begin
   CellHeight:= ROW_HEIGHT_DEFAULT;
   if (AValue<>EmptyStr) and AAutoHeight then
-    CellHeight:= Round(CalcCellHeight(AValue, ACol1, ACol2, AWrapToWordParts, ARedStrWidth)/(ARow2-ARow1+1));
+    CellHeight:= Round(CalcCellHeight(AValue, ACol1, ACol2, ADivideByHyphen, AWrapToWordParts, ARedStrWidth)/(ARow2-ARow1+1));
   CellIndex(ARow1, ACol1, ARow2, ACol2);
   SetCellSettings(ARow1, ACol1, ARow2, ACol2, CellHeight, AWordWrap, ABordersType);
   FWorksheet.WriteText(ARow1, ACol1, AValue, ARichTextParams);
@@ -824,6 +829,7 @@ begin
 end;
 
 function TSheetWriter.CalcCellHeight(var AText: String; const ACol1, ACol2: Integer;
+                             const ADivideByHyphen: Boolean = True;
                              const AWrapToWordParts: Boolean = False;
                              const ARedStrWidth: Integer = 0): Integer;
 var
@@ -841,7 +847,8 @@ begin
   Font.Name:= FFontName;
   Font.Size:= Round(FFontSize);
   Font.Style:= FontStyleSheetsToGraphics(FFontStyle);
-  Result:= TextToCell(AText, Font, CellWidth, ARedStrWidth, AWrapToWordParts, BreakSymbol);
+  Result:= TextToCell(AText, Font, CellWidth, ARedStrWidth,
+                      ADivideByHyphen, AWrapToWordParts, BreakSymbol);
   Result:= HeightFromScreenToDefault(Result);
   FreeAndNil(Font);
 end;

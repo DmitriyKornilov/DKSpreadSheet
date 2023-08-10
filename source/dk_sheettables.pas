@@ -46,12 +46,12 @@ type
 
     procedure SetColumnVisibles;
     procedure SetColumnVisible(const ACol: Integer; AValue: Boolean);
+
     procedure SetCanSelect(AValue: Boolean);
     procedure SetCanUnselect(AValue: Boolean);
 
     procedure MouseDown(Sender: TObject; Button: TMouseButton;
       {%H-}Shift: TShiftState; X, Y: Integer);
-
   protected
     FOnSelect: TSheetSelectEvent;
 
@@ -455,6 +455,8 @@ begin
   FWriter.WriteText(R, 1, R, FWriter.ColCount,
                    FRowAfterValue, FRowAfterBorderType, True, True);
 end;
+
+
 
 function TSheetTable.LineIndexFromRow(const ARow: Integer): Integer;
 var
