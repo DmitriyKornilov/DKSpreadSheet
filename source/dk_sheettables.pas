@@ -761,23 +761,30 @@ begin
 
   if IsEmpty and (not IsEmptyDraw) then Exit;
 
-  if Assigned(FWriter) then FreeAndNil(FWriter);
-  FWriter:= TSheetWriter.Create(FColumnWidths, FGrid.Worksheet, FGrid);
+  FGrid.Visible:= False;
+  try
 
-  FWriter.SetZoom(FZoomPercents);
-  FGrid.ZoomFactor:= FZoomPercents/100;
+    if Assigned(FWriter) then FreeAndNil(FWriter);
+    FWriter:= TSheetWriter.Create(FColumnWidths, FGrid.Worksheet, FGrid);
 
-  FWriter.BeginEdit;
+    FWriter.SetZoom(FZoomPercents);
+    FGrid.ZoomFactor:= FZoomPercents/100;
 
-  DrawRowBefore;
-  DrawHeader;
-  DrawData;
-  DrawRowAfter;
-  FreezeHeader;
+    FWriter.BeginEdit;
 
-  FWriter.EndEdit;
+    DrawRowBefore;
+    DrawHeader;
+    DrawData;
+    DrawRowAfter;
+    FreezeHeader;
 
-  SetColumnVisibles;
+    FWriter.EndEdit;
+
+    SetColumnVisibles;
+
+  finally
+    FGrid.Visible:= True;
+  end;
 end;
 
 procedure TSheetTable.SelectIndex(const AIndex: Integer);
