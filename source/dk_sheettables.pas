@@ -200,7 +200,8 @@ type
     property RowBeforeBGColor: TColor read FRowBeforeBGColor write FRowBeforeBGColor;
     property RowAfterBGColor: TColor read FRowAfterBGColor write FRowAfterBGColor;
 
-    procedure Save(const ADoneMessage: String);
+    procedure Save(const ADoneMessage: String;
+                   const AOrient: TsPageOrientation = spoLandscape);
     procedure Draw;
     property IsEmptyDraw: Boolean read FIsEmptyDraw write FIsEmptyDraw;
     property IsEmpty: Boolean read GetIsEmpty;
@@ -726,7 +727,8 @@ begin
   FRowAfterFont.Size:= ASize;
 end;
 
-procedure TSheetTable.Save(const ADoneMessage: String);
+procedure TSheetTable.Save(const ADoneMessage: String;
+                           const AOrient: TsPageOrientation = spoLandscape);
 var
   Exporter: TGridExporter;
 begin
@@ -734,6 +736,7 @@ begin
     DrawLine(FSelectedIndex, False);
   Exporter:= TGridExporter.Create(FGrid);
   try
+    Exporter.PageSettings(AOrient);
     Exporter.Save(ADoneMessage);
   finally
     FreeAndNil(Exporter);
