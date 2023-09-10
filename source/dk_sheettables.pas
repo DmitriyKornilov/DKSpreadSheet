@@ -200,8 +200,7 @@ type
     property RowBeforeBGColor: TColor read FRowBeforeBGColor write FRowBeforeBGColor;
     property RowAfterBGColor: TColor read FRowAfterBGColor write FRowAfterBGColor;
 
-    procedure Save(const ADoneMessage: String;
-                   const AOrient: TsPageOrientation = spoLandscape);
+    procedure Save(const ADoneMessage: String; const ALandscape: Boolean = False);
     procedure Draw;
     property IsEmptyDraw: Boolean read FIsEmptyDraw write FIsEmptyDraw;
     property IsEmpty: Boolean read GetIsEmpty;
@@ -728,7 +727,7 @@ begin
 end;
 
 procedure TSheetTable.Save(const ADoneMessage: String;
-                           const AOrient: TsPageOrientation = spoLandscape);
+                           const ALandscape: Boolean = False);
 var
   Exporter: TGridExporter;
 begin
@@ -736,7 +735,10 @@ begin
     DrawLine(FSelectedIndex, False);
   Exporter:= TGridExporter.Create(FGrid);
   try
-    Exporter.PageSettings(AOrient);
+    if ALandscape then
+      Exporter.PageSettings(spoLandscape)
+    else
+      Exporter.PageSettings(spoPortrait);
     Exporter.Save(ADoneMessage);
   finally
     FreeAndNil(Exporter);
