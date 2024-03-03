@@ -9,8 +9,18 @@ uses
   DK_Const, DK_Vector, DK_Matrix, DK_TextUtils, DK_StrUtils, DK_SheetConst,
   DK_SheetUtils, DK_Math, DK_PPI, Math;
 
-type
+const
+  haLeft    = fpsTypes.haLeft;
+  haCenter  = fpsTypes.haCenter;
+  haRight   = fpsTypes.haRight;
+  haDefault = fpsTypes.haDefault;
+  vaTop     = fpsTypes.vaTop;
+  vaCenter  = fpsTypes.vaCenter;
+  vaBottom  = fpsTypes.vaBottom;
+  vaDefault = fpsTypes.vaDefault;
 
+type
+  TsHorAlignment = fpsTypes.TsHorAlignment;
   TCellBorderType = (cbtNone, cbtLeft, cbtRight, cbtTop, cbtBottom,
                      cbtOuter, cbtInner, cbtAll);
 
@@ -24,6 +34,7 @@ type
     FColWidths: TIntVector;
     FFirstCol: Integer;
     FFirstRow: Integer;
+    FRowHeightDefault: Integer;
     //Color
     FBGColorMatrix: TIntMatrix;
     //Font
@@ -81,8 +92,8 @@ type
     procedure SetWidth(const ACol, AValue: Integer);
     procedure SetHeight(const ARow, AValue: Integer);
 
-    procedure SetLineHeight(const ARow, AHeight: Integer; const AMinValue: Integer = ROW_HEIGHT_DEFAULT);
-    procedure SetNewRowHeight(const ARow, AHeight: Integer; const AMinValue: Integer = ROW_HEIGHT_DEFAULT);
+    procedure SetLineHeight(const ARow, AHeight: Integer; const AMinValue: Integer);
+    procedure SetNewRowHeight(const ARow, AHeight: Integer; const AMinValue: Integer);
 
     function CalcCellHeight(var AText: String; const ACol1, ACol2: Integer;
                            const ADivideByHyphen: Boolean = True;
@@ -93,7 +104,9 @@ type
 
     procedure SetDefaultGridSettings;
   public
-    constructor Create(const AColWidths: TIntVector; const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid = nil);
+    constructor Create(const AColWidths: TIntVector; const AWorksheet: TsWorksheet;
+                       const AGrid: TsWorksheetGrid = nil;
+                       const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
     destructor  Destroy; override;
     procedure Clear;
     procedure SetDefaultCellSettings;
@@ -347,7 +360,8 @@ begin
 end;
 
 constructor TSheetWriter.Create(const AColWidths: TIntVector;
-          const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid = nil);
+          const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid = nil;
+          const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
 begin
   inherited Create;
   FWorksheet:= AWorksheet;
@@ -355,6 +369,7 @@ begin
   FFirstCol:= 0;
   FFirstRow:= 0;
   FColWidths:= VCut(AColWidths);
+  FRowHeightDefault:= ARowHeightDefault;
   if HasGrid then
   begin
     FFirstCol:= 1;
@@ -472,7 +487,7 @@ begin
   FWorksheet.WriteRowHeight(ARow, PixelToMillimeter(H), suMillimeters);
 end;
 
-procedure TSheetWriter.SetLineHeight(const ARow, AHeight: Integer; const AMinValue: Integer = ROW_HEIGHT_DEFAULT);
+procedure TSheetWriter.SetLineHeight(const ARow, AHeight: Integer; const AMinValue: Integer);
 var
   OldRowCount, i: Integer;
 begin
@@ -480,12 +495,12 @@ begin
   if OldRowCount-FFirstRow<ARow then
   begin
     for i:= OldRowCount-FFirstRow to ARow-1 do
-      SetNewRowHeight(i, ROW_HEIGHT_DEFAULT);
+      SetNewRowHeight(i, FRowHeightDefault, FRowHeightDefault);
   end;
   SetNewRowHeight(ARow, AHeight, AMinValue);
 end;
 
-procedure TSheetWriter.SetNewRowHeight(const ARow, AHeight: Integer; const AMinValue: Integer = ROW_HEIGHT_DEFAULT);
+procedure TSheetWriter.SetNewRowHeight(const ARow, AHeight: Integer; const AMinValue: Integer);
 var
   OldRowCount, HValue: Integer;
 begin
@@ -663,7 +678,7 @@ procedure TSheetWriter.WriteText(ARow1, ACol1, ARow2, ACol2: Integer; AValue: St
 var
   CellHeight: Integer;
 begin
-  CellHeight:= ROW_HEIGHT_DEFAULT;
+  CellHeight:= FRowHeightDefault;
   if (AValue<>EmptyStr) and AAutoHeight then
     CellHeight:= Round(CalcCellHeight(AValue, ACol1, ACol2, ADivideByHyphen, AWrapToWordParts, ARedStrWidth)/(ARow2-ARow1+1));
   CellIndex(ARow1, ACol1, ARow2, ACol2);
@@ -686,7 +701,7 @@ procedure TSheetWriter.WriteTextVertical(ARow1, ACol1, ARow2, ACol2: Integer;
   const ARichTextParams: TsRichTextParams);
 begin
   CellIndex(ARow1, ACol1, ARow2, ACol2);
-  SetCellSettings(ARow1, ACol1, ARow2, ACol2, ROW_HEIGHT_DEFAULT, AWordWrap, ABordersType);
+  SetCellSettings(ARow1, ACol1, ARow2, ACol2, FRowHeightDefault, AWordWrap, ABordersType);
   FWorksheet.WriteTextRotation(ARow1, ACol1, rt90DegreeCounterClockwiseRotation);
   if AValue=EmptyStr then
     FWorksheet.WriteBlank(ARow1, ACol1)
@@ -706,7 +721,7 @@ procedure TSheetWriter.WriteNumber(ARow1, ACol1, ARow2, ACol2: Integer; const AV
                           const AFormatString: String = '');
 begin
   CellIndex(ARow1, ACol1, ARow2, ACol2);
-  SetCellSettings(ARow1, ACol1, ARow2, ACol2, ROW_HEIGHT_DEFAULT, False, ABordersType);
+  SetCellSettings(ARow1, ACol1, ARow2, ACol2, FRowHeightDefault, False, ABordersType);
   if AFormatString<>EmptyStr then
     FWorksheet.WriteNumberFormat(ARow1, ACol1, nfCustom, AFormatString);
   FWorksheet.WriteNumber(ARow1, ACol1, AValue);
@@ -726,7 +741,7 @@ procedure TSheetWriter.WriteNumber(ARow1, ACol1, ARow2, ACol2: Integer; const AV
                             const ANumberFormat: TsNumberFormat = nfGeneral);
 begin
   CellIndex(ARow1, ACol1, ARow2, ACol2);
-  SetCellSettings(ARow1, ACol1, ARow2, ACol2, ROW_HEIGHT_DEFAULT, False, ABordersType);
+  SetCellSettings(ARow1, ACol1, ARow2, ACol2, FRowHeightDefault, False, ABordersType);
   FWorksheet.WriteNumber(ARow1, ACol1, AValue, ANumberFormat, ADecimals);
 end;
 
@@ -742,7 +757,7 @@ procedure TSheetWriter.WriteCurrency(ARow1, ACol1, ARow2, ACol2: Integer; const 
                           const AFormatString: String = '');
 begin
   CellIndex(ARow1, ACol1, ARow2, ACol2);
-  SetCellSettings(ARow1, ACol1, ARow2, ACol2, ROW_HEIGHT_DEFAULT, False, ABordersType);
+  SetCellSettings(ARow1, ACol1, ARow2, ACol2, FRowHeightDefault, False, ABordersType);
   if AFormatString<>EmptyStr then
     FWorksheet.WriteCurrency(ARow1, ACol1, AValue, nfCustom, AFormatString)
   else
@@ -761,7 +776,7 @@ procedure TSheetWriter.WriteDate(ARow1, ACol1, ARow2, ACol2: Integer; const AVal
                         AFormatString: String = '');
 begin
   CellIndex(ARow1, ACol1, ARow2, ACol2);
-  SetCellSettings(ARow1, ACol1, ARow2, ACol2, ROW_HEIGHT_DEFAULT, False, ABordersType);
+  SetCellSettings(ARow1, ACol1, ARow2, ACol2, FRowHeightDefault, False, ABordersType);
   if AFormatString=EmptyStr then
     AFormatString:= 'dd.mm.yyyy';
   FWorksheet.WriteDateTime(ARow1, ACol1, AValue, AFormatString);
@@ -778,7 +793,7 @@ procedure TSheetWriter.WriteTime(ARow1, ACol1, ARow2, ACol2: Integer; const AVal
                         AFormatString: String = '');
 begin
   CellIndex(ARow1, ACol1, ARow2, ACol2);
-  SetCellSettings(ARow1, ACol1, ARow2, ACol2, ROW_HEIGHT_DEFAULT, False, ABordersType);
+  SetCellSettings(ARow1, ACol1, ARow2, ACol2, FRowHeightDefault, False, ABordersType);
   if AFormatString=EmptyStr then
     AFormatString:= 'hh:nn:ss';
   FWorksheet.WriteDateTime(ARow1, ACol1, AValue, AFormatString);
@@ -794,7 +809,7 @@ procedure TSheetWriter.WriteDateTime(ARow1, ACol1, ARow2, ACol2: Integer;
   const AValue: TDateTime; const ABordersType: TCellBorderType; AFormatString: String);
 begin
   CellIndex(ARow1, ACol1, ARow2, ACol2);
-  SetCellSettings(ARow1, ACol1, ARow2, ACol2, ROW_HEIGHT_DEFAULT, False, ABordersType);
+  SetCellSettings(ARow1, ACol1, ARow2, ACol2, FRowHeightDefault, False, ABordersType);
   if AFormatString=EmptyStr then
     AFormatString:= 'dd.mm.yyyy hh:nn:ss';
   FWorksheet.WriteDateTime(ARow1, ACol1, AValue, AFormatString);
@@ -874,7 +889,7 @@ begin
   FGrid.ShowGridLines:= False;
   FGrid.ShowHeaders:= False;
   FGrid.SelectionPen.Style:= psClear;
-  FGrid.DefaultRowHeight:= ROW_HEIGHT_DEFAULT;
+  FGrid.DefaultRowHeight:= FRowHeightDefault;
   FGrid.FrozenBorderPen.Style:= psClear;
 end;
 
@@ -923,7 +938,7 @@ var
   i: Integer;
 begin
   for i:= ARow1 to ARow2 do
-    SetLineHeight(i, ARowHeight);
+    SetLineHeight(i, ARowHeight, FRowHeightDefault);
   GetBordersNeed(ABordersType, ALeft, ARight, ATop, ABottom, AInner);
   if (ARow1=ARow2) and (ACol1=ACol2) then
   begin
