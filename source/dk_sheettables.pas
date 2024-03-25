@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Graphics, Controls, fpsTypes, fpspreadsheetgrid,
-  DK_Const, DK_Vector, DK_Matrix, DK_StrUtils,  DK_SheetWriter,
+  DK_Const, DK_Vector, DK_Matrix, DK_StrUtils,  DK_SheetWriter, DK_Color,
   DK_SheetExporter;
 
 const
