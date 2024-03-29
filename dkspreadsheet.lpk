@@ -35,6 +35,10 @@
         <Filename Value="source\dk_sheettables.pas"/>
         <UnitName Value="DK_SheetTables"/>
       </Item>
+      <Item>
+        <Filename Value="source\dk_sheettypes.pas"/>
+        <UnitName Value="DK_SheetTypes"/>
+      </Item>
     </Files>
     <RequiredPkgs>
       <Item>

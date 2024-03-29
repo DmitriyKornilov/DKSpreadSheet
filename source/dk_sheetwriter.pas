@@ -9,16 +9,6 @@ uses
   DK_Const, DK_Vector, DK_Matrix, DK_TextUtils, DK_StrUtils, DK_SheetConst,
   DK_SheetUtils, DK_Math, DK_PPI, Math;
 
-const
-  haLeft    = fpsTypes.haLeft;
-  haCenter  = fpsTypes.haCenter;
-  haRight   = fpsTypes.haRight;
-  haDefault = fpsTypes.haDefault;
-  vaTop     = fpsTypes.vaTop;
-  vaCenter  = fpsTypes.vaCenter;
-  vaBottom  = fpsTypes.vaBottom;
-  vaDefault = fpsTypes.vaDefault;
-
 type
   TsHorAlignment = fpsTypes.TsHorAlignment;
   TCellBorderType = (cbtNone, cbtLeft, cbtRight, cbtTop, cbtBottom,

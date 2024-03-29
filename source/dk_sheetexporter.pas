@@ -21,76 +21,68 @@ type
               pfWidth,   //заполнить по ширине 1 страницы (по высоте - сколько нужно, чтобы вместить все)
               pfHeight); //заполнить по высоте 1 страницы (по ширине - сколько нужно, чтобы вместить все)
 
+  { TCustomExporter }
+
+  TCustomExporter = class (TObject)
+  protected
+    FWorkbook: TsWorkbook;
+  public
+    //Direct save to FileName
+    procedure SaveToXLSX(const ADoneMessage: String = '';
+                         const AFileName: String = '';
+                         const AOverwriteExistingFile: Boolean = False);
+    procedure SaveToODS(const ADoneMessage: String = '';
+                         const AFileName: String = '';
+                         const AOverwriteExistingFile: Boolean = False);
+    //Save with SaveDialog
+    procedure Save(const ADoneMessage: String = '';
+                   const ADefaultFileName: String = '';
+                   const AOverwriteExistingFile: Boolean = False);
+
+    procedure PageSettings(const AOrient: TsPageOrientation = spoPortrait;
+                           const APageFit: TPageFit = pfWidth;
+                           const AShowHeaders: Boolean = True;
+                           const AShowGridLines: Boolean = True;
+                           const ATopMargin: Double=10;     //mm
+                           const ALeftMargin: Double=10;    //mm
+                           const ARightMargin: Double=10;   //mm
+                           const ABottomMargin: Double=10;  //mm
+                           const AFooterMargin: Double=0;   //mm
+                           const AHeaderMargin: Double=0);  //mm
+  end;
+
+  { TSingleExporter }
+
+  TSingleExporter = class (TCustomExporter)
+  private
+    procedure SetSheetName(const AName: String);
+    function GetSheetName: String;
+  public
+    property SheetName: String read GetSheetName write SetSheetName;
+  end;
+
   { TGridExporter }
 
-  TGridExporter = class (TObject)
-  private
-      FWorkbook: TsWorkbook;
-      procedure SetSheetName(const AName: String);
-      function GetSheetName: String;
+  TGridExporter = class (TSingleExporter)
   public
-      constructor Create(const AGrid: TsWorksheetGrid);
-      destructor  Destroy; override;
-
-      //Direct save to FileName
-      procedure SaveToXLSX(const ADoneMessage: String = '';
-                           const AFileName: String = '';
-                           const AOverwriteExistingFile: Boolean = False);
-      procedure SaveToODS(const ADoneMessage: String = '';
-                           const AFileName: String = '';
-                           const AOverwriteExistingFile: Boolean = False);
-      //Save with SaveDialog
-      procedure Save(const ADoneMessage: String = '';
-                     const ADefaultFileName: String = '';
-                     const AOverwriteExistingFile: Boolean = False);
-
-      procedure PageSettings(const AOrient: TsPageOrientation = spoPortrait;
-                             const APageFit: TPageFit = pfWidth;
-                             const AShowHeaders: Boolean = True;
-                             const AShowGridLines: Boolean = True;
-                             const ATopMargin: Double=10;     //mm
-                             const ALeftMargin: Double=10;    //mm
-                             const ARightMargin: Double=10;   //mm
-                             const ABottomMargin: Double=10;  //mm
-                             const AFooterMargin: Double=0;   //mm
-                             const AHeaderMargin: Double=0);  //mm
-      property SheetName: String read GetSheetName write SetSheetName;
+    constructor Create(const AGrid: TsWorksheetGrid);
   end;
 
   { TSheetExporter }
 
-  TSheetExporter = class (TObject)
-    private
-      FWorkbook: TsWorkbook;
-    public
-      constructor Create;
-      destructor  Destroy; override;
-      function AddWorksheet(const AName: String): TsWorksheet;
+  TSheetExporter = class (TSingleExporter)
+  public
+    constructor Create(const ASheet: TsWorksheet);
+  end;
 
-      //Direct save to FileName
-      procedure SaveToXLSX(const ADoneMessage: String = '';
-                           const AFileName: String = '';
-                           const AOverwriteExistingFile: Boolean = False);
-      procedure SaveToODS(const ADoneMessage: String = '';
-                           const AFileName: String = '';
-                           const AOverwriteExistingFile: Boolean = False);
-      //Save with SaveDialog
-      procedure Save(const ADoneMessage: String = '';
-                     const ADefaultFileName: String = '';
-                     const AOverwriteExistingFile: Boolean = False);
+  { TSheetsExporter }
 
-      procedure PageSettings(const AOrient: TsPageOrientation = spoPortrait;
-                             const APageFit: TPageFit = pfWidth;
-                             const AShowHeaders: Boolean = True;
-                             const AShowGridLines: Boolean = True;
-                             const ATopMargin: Double=10;     //mm
-                             const ALeftMargin: Double=10;    //mm
-                             const ARightMargin: Double=10;   //mm
-                             const ABottomMargin: Double=10;  //mm
-                             const AFooterMargin: Double=0;   //mm
-                             const AHeaderMargin: Double=0);  //mm
-
-    end;
+  TSheetsExporter = class (TCustomExporter)
+  public
+    constructor Create;
+    destructor  Destroy; override;
+    function AddWorksheet(const AName: String): TsWorksheet;
+  end;
 
   function TextToSheetName(const AText: String): String;
   function TextToFileName(const AText: String): String;
@@ -115,8 +107,6 @@ var
   i, k: Integer;
 begin
   Result:= AText;
-  //for i:=0 to High(INVALID_CHARS) do
-  //  StringReplace(Result, INVALID_CHARS[i], '', [rfReplaceAll]);
   for i:=0 to High(INVALID_CHARS) do
   begin
     k:= SPos(Result, INVALID_CHARS[i]);
@@ -229,6 +219,58 @@ begin
   end;
 end;
 
+{ TCustomExporter }
+
+procedure TCustomExporter.SaveToXLSX(const ADoneMessage: String = '';
+                         const AFileName: String = '';
+                         const AOverwriteExistingFile: Boolean = False);
+begin
+  SaveToFormat(FWorkbook, sfOOXML, ADoneMessage, AFileName, AOverwriteExistingFile);
+end;
+
+procedure TCustomExporter.SaveToODS(const ADoneMessage: String = '';
+                         const AFileName: String = '';
+                         const AOverwriteExistingFile: Boolean = False);
+begin
+   SaveToFormat(FWorkbook, sfOpenDocument, ADoneMessage, AFileName, AOverwriteExistingFile);
+end;
+
+procedure TCustomExporter.Save(const ADoneMessage: String = '';
+                   const ADefaultFileName: String = '';
+                   const AOverwriteExistingFile: Boolean = False);
+begin
+  SaveWithDialog(FWorkbook, ADoneMessage, ADefaultFileName, AOverwriteExistingFile);
+end;
+
+procedure TCustomExporter.PageSettings(const AOrient: TsPageOrientation = spoPortrait;
+                           const APageFit: TPageFit = pfWidth;
+                           const AShowHeaders: Boolean = True;
+                           const AShowGridLines: Boolean = True;
+                           const ATopMargin: Double=10;     //mm
+                           const ALeftMargin: Double=10;    //mm
+                           const ARightMargin: Double=10;   //mm
+                           const ABottomMargin: Double=10;  //mm
+                           const AFooterMargin: Double=0;   //mm
+                           const AHeaderMargin: Double=0);  //mm
+begin
+  SheetPageSettings(FWorkBook.ActiveWorksheet, AOrient, APageFit,
+              AShowHeaders, AShowGridLines,
+              ATopMargin, ALeftMargin, ARightMargin, ABottomMargin,
+              AFooterMargin, AHeaderMargin);
+end;
+
+{ TSingleExporter }
+
+procedure TSingleExporter.SetSheetName(const AName: String);
+begin
+  FWorkbook.ActiveWorksheet.Name:= TextToSheetName(AName);
+end;
+
+function TSingleExporter.GetSheetName: String;
+begin
+  Result:= FWorkbook.ActiveWorksheet.Name;
+end;
+
 { TGridExporter }
 
 constructor TGridExporter.Create(const AGrid: TsWorksheetGrid);
@@ -237,122 +279,33 @@ begin
   PageSettings;
 end;
 
-destructor TGridExporter.Destroy;
-begin
-  inherited Destroy;
-end;
-
-procedure TGridExporter.SetSheetName(const AName: String);
-begin
-  FWorkbook.ActiveWorksheet.Name:= TextToSheetName(AName);
-end;
-
-function TGridExporter.GetSheetName: String;
-begin
-  Result:= FWorkbook.ActiveWorksheet.Name;
-end;
-
-procedure TGridExporter.SaveToXLSX(const ADoneMessage: String;
-  const AFileName: String; const AOverwriteExistingFile: Boolean);
-begin
-  SaveToFormat(FWorkbook, sfOOXML, ADoneMessage,
-               AFileName, AOverwriteExistingFile);
-end;
-
-procedure TGridExporter.SaveToODS(const ADoneMessage: String;
-  const AFileName: String; const AOverwriteExistingFile: Boolean);
-begin
-  SaveToFormat(FWorkbook, sfOpenDocument, ADoneMessage,
-               AFileName, AOverwriteExistingFile);
-end;
-
-procedure TGridExporter.Save(const ADoneMessage: String;
-                              const ADefaultFileName: String;
-                              const AOverwriteExistingFile: Boolean = False);
-begin
-  SaveWithDialog(FWorkbook, ADoneMessage,
-                 ADefaultFileName, AOverwriteExistingFile);
-end;
-
-procedure TGridExporter.PageSettings(
-                             const AOrient: TsPageOrientation = spoPortrait;
-                             const APageFit: TPageFit = pfWidth;
-                             const AShowHeaders: Boolean = True;
-                             const AShowGridLines: Boolean = True;
-                             const ATopMargin: Double=10;     //mm
-                             const ALeftMargin: Double=10;    //mm
-                             const ARightMargin: Double=10;   //mm
-                             const ABottomMargin: Double=10;  //mm
-                             const AFooterMargin: Double=0;   //mm
-                             const AHeaderMargin: Double=0);  //mm
-begin
-  SheetPageSettings(FWorkBook.ActiveWorksheet, AOrient, APageFit,
-              AShowHeaders, AShowGridLines,
-              ATopMargin, ALeftMargin, ARightMargin, ABottomMargin,
-              AFooterMargin, AHeaderMargin);
-
-end;
-
 { TSheetExporter }
 
-constructor TSheetExporter.Create;
+constructor TSheetExporter.Create(const ASheet: TsWorksheet);
+begin
+  FWorkbook:= ASheet.Workbook;
+  PageSettings;
+end;
+
+{ TSheetsExporter }
+
+constructor TSheetsExporter.Create;
 begin
   inherited Create;
   FWorkbook:= TsWorkbook.Create;
 end;
 
-destructor TSheetExporter.Destroy;
+destructor TSheetsExporter.Destroy;
 begin
   FreeAndNil(FWorkbook);
   inherited Destroy;
 end;
 
-function TSheetExporter.AddWorksheet(const AName: String): TsWorksheet;
+function TSheetsExporter.AddWorksheet(const AName: String): TsWorksheet;
 begin
   Result:= FWorkbook.AddWorksheet(TextToSheetName(AName));
   FWorkbook.ActiveWorksheet:= Result;
   PageSettings;
-end;
-
-procedure TSheetExporter.SaveToXLSX(const ADoneMessage: String;
-  const AFileName: String; const AOverwriteExistingFile: Boolean);
-begin
-  SaveToFormat(FWorkbook, sfOOXML, ADoneMessage,
-               AFileName, AOverwriteExistingFile);
-end;
-
-procedure TSheetExporter.SaveToODS(const ADoneMessage: String;
-  const AFileName: String; const AOverwriteExistingFile: Boolean);
-begin
-  SaveToFormat(FWorkbook, sfOpenDocument, ADoneMessage,
-               AFileName, AOverwriteExistingFile);
-end;
-
-procedure TSheetExporter.Save(const ADoneMessage: String;
-                              const ADefaultFileName: String;
-                              const AOverwriteExistingFile: Boolean = False);
-begin
-  SaveWithDialog(FWorkbook, ADoneMessage,
-                 ADefaultFileName, AOverwriteExistingFile);
-end;
-
-procedure TSheetExporter.PageSettings(
-                             const AOrient: TsPageOrientation = spoPortrait;
-                             const APageFit: TPageFit = pfWidth;
-                             const AShowHeaders: Boolean = True;
-                             const AShowGridLines: Boolean = True;
-                             const ATopMargin: Double=10;     //mm
-                             const ALeftMargin: Double=10;    //mm
-                             const ARightMargin: Double=10;   //mm
-                             const ABottomMargin: Double=10;  //mm
-                             const AFooterMargin: Double=0;   //mm
-                             const AHeaderMargin: Double=0);  //mm
-begin
-  SheetPageSettings(FWorkBook.ActiveWorksheet, AOrient, APageFit,
-              AShowHeaders, AShowGridLines,
-              ATopMargin, ALeftMargin, ARightMargin, ABottomMargin,
-              AFooterMargin, AHeaderMargin);
-
 end;
 
 end.

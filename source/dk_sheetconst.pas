@@ -8,6 +8,7 @@ uses
   {Classes, SysUtils} fpstypes, Graphics;
 
 const
+
   {---COMMON PROPERTIES---}
   //Dimensions
   //DIMENTION_FACTOR = 0.78;
@@ -24,8 +25,8 @@ const
   {---SHEET PROPERTIES---}
   //Font
   FONT_NAME_DEFAULT: String = 'Arial';
-  FONT_SIZE_DEFAULT: Single = 8;
-  FONT_SIZE_MINIMUM: Single = 6;
+  FONT_SIZE_DEFAULT: Integer = 8;
+  FONT_SIZE_MINIMUM: Integer = 6;
   FONT_STYLE_DEFAULT: TsFontStyles = [];
   FONT_COLOR_DEFAULT: TColor = clWindowText;
 
