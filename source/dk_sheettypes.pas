@@ -5,7 +5,7 @@ unit DK_SheetTypes;
 interface
 
 uses
-  Classes, SysUtils, Graphics, fpstypes, fpspreadsheet, fpspreadsheetgrid,
+  Classes, SysUtils, Graphics, fpstypes, fpspreadsheetgrid,
   DK_SheetConst, DK_SheetWriter, DK_SheetExporter, DK_Vector;
 
 const
