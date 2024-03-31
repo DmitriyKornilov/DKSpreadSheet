@@ -6,7 +6,8 @@ interface
 
 uses
   Classes, SysUtils, Graphics, fpstypes, fpspreadsheetgrid,
-  DK_SheetConst, DK_SheetWriter, DK_SheetExporter, DK_Vector;
+  DK_SheetConst, DK_SheetUtils, DK_SheetWriter, DK_SheetExporter,
+  DK_Vector, DK_Color;
 
 const
   haLeft    = fpsTypes.haLeft;
@@ -38,7 +39,15 @@ type
   private
     FWriter: TSheetWriter;
     FFont: TFont;
+    FColorVector: TColorVector;
+    FColorIsNeed: Boolean;
+    FSelectedRows: TIntVector;
+    FSelectedCols: TIntVector;
+
+    procedure SetColorIsNeed(AValue: Boolean);
     procedure SetFont(AValue: TFont);
+    function GetCellColor(const ARow, ACol: Integer): TsColor;
+    function GetCellSelectionIndex(const ARow, ACol: Integer): Integer;
   public
     constructor Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid = nil);
     destructor  Destroy; override;
@@ -47,6 +56,13 @@ type
     procedure Save(const ASheetName: String = 'Лист1';
                    const ADoneMessage: String = 'Выполнено!';
                    const ALandscape: Boolean = False);
+
+    procedure ColorsUpdate(const AColorVector: TColorVector);
+    procedure ColorsClear;
+    property  ColorIsNeed: Boolean read FColorIsNeed write SetColorIsNeed;
+    procedure SelectionAddCell(const ARow, ACol: Integer);
+    procedure SelectionDelCell(const ARow, ACol: Integer);
+    procedure SelectionClear;
     property Font: TFont read FFont write SetFont;
     property Writer: TSheetWriter read FWriter;
   end;
@@ -63,10 +79,55 @@ begin
     FFont.Size:= FONT_SIZE_MINIMUM;
 end;
 
+procedure TCustomSheet.SetColorIsNeed(AValue: Boolean);
+begin
+  if FColorIsNeed=AValue then Exit;
+  FColorIsNeed:= AValue;
+  if FColorIsNeed and (not VIsNil(FColorVector)) then
+    ColorsUpdate(FColorVector)
+  else
+    ColorsClear;
+end;
+
+function TCustomSheet.GetCellColor(const ARow, ACol: Integer): TsColor;
+var
+  i, ColorIndex: Integer;
+begin
+  Result:= scTransparent;
+  if not ColorIsNeed then Exit;
+  if VIsNil(FColorVector) then Exit;
+
+  for i:= 0 to High(Writer.BGColorMatrix) do
+  begin
+    if (Writer.BGColorMatrix[i,0]=ARow) and (Writer.BGColorMatrix[i,1]=ACol) then
+    begin
+      ColorIndex:= Writer.BGColorMatrix[i,2];
+      if (ColorIndex<>TRANSPARENT_COLOR_INDEX) and (ColorIndex<=High(FColorVector)) then
+        Result:= ColorGraphicsToSheets(FColorVector[ColorIndex]);
+    end;
+  end;
+end;
+
+function TCustomSheet.GetCellSelectionIndex(const ARow, ACol: Integer): Integer;
+var
+  i: Integer;
+begin
+  Result:= -1;
+  for i:= 0 to High(FSelectedRows) do
+  begin
+    if (FSelectedRows[i]=ARow) and (FSelectedCols[i]=ACol) then
+    begin
+      Result:= i;
+      break;
+    end;
+  end;
+end;
+
 constructor TCustomSheet.Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid = nil);
 begin
   FFont:= TFont.Create;
   SetFontDefault;
+  FColorIsNeed:= True;
   FWriter:= TSheetWriter.Create(SetWidths, AWorksheet, AGrid);
 end;
 
@@ -104,6 +165,50 @@ begin
   finally
     FreeAndNil(Exporter);
   end;
+end;
+
+procedure TCustomSheet.ColorsUpdate(const AColorVector: TColorVector);
+begin
+  FColorVector:= AColorVector;
+  FWriter.ApplyBGColors(FColorVector);
+end;
+
+procedure TCustomSheet.ColorsClear;
+begin
+  FWriter.ClearBGColors;
+end;
+
+procedure TCustomSheet.SelectionAddCell(const ARow, ACol: Integer);
+var
+  CellSelectionIndex: Integer;
+  Cl: TsColor;
+begin
+  CellSelectionIndex:= GetCellSelectionIndex(ARow, ACol);
+  if CellSelectionIndex>=0 then Exit;
+  VAppend(FSelectedRows, ARow);
+  VAppend(FSelectedCols, ACol);
+  Cl:= DefaultSelectionBGColor;
+  FWriter.Worksheet.WriteBackground(ARow, ACol, fsSolidFill, Cl, Cl);
+end;
+
+procedure TCustomSheet.SelectionDelCell(const ARow, ACol: Integer);
+var
+  CellSelectionIndex: Integer;
+  Cl: TsColor;
+begin
+  CellSelectionIndex:= GetCellSelectionIndex(ARow, ACol);
+  if CellSelectionIndex<0 then Exit;
+  VDel(FSelectedRows, CellSelectionIndex);
+  VDel(FSelectedCols, CellSelectionIndex);
+  Cl:= GetCellColor(ARow, ACol);
+  FWriter.Worksheet.WriteBackground(ARow, ACol, fsSolidFill, Cl, Cl);
+end;
+
+procedure TCustomSheet.SelectionClear;
+begin
+  FSelectedRows:= nil;
+  FSelectedCols:= nil;
+  FWriter.ApplyBGColors(FColorVector);
 end;
 
 end.

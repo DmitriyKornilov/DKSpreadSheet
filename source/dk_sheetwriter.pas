@@ -108,6 +108,7 @@ type
     procedure DelCellBGColorIndex(const ARow, ACol: Integer);
     procedure ApplyBGColors(const ABGColors: TColorVector);
     procedure ClearBGColors;
+    property BGColorMatrix: TIntMatrix read FBGColorMatrix;
     //Font
     procedure SetFontDefault;
     procedure SetFont(const AName: String; const ASize: Single; const AStyle: TsFontStyles; const AColor: TsColor);
