@@ -9,18 +9,7 @@ uses
   DK_Const, DK_Vector, DK_Matrix, DK_StrUtils,  DK_SheetWriter, DK_Color,
   DK_SheetExporter;
 
-const
-  haLeft   = fpsTypes.haLeft;
-  haCenter = fpsTypes.haCenter;
-  haRight  = fpsTypes.haRight;
-  vaTop    = fpsTypes.vaTop;
-  vaCenter = fpsTypes.vaCenter;
-  vaBottom = fpsTypes.vaBottom;
-
 type
-  TsHorAlignment  = fpsTypes.TsHorAlignment;  //(haDefault, haLeft, haCenter, haRight);
-  TsVertAlignment = fpsTypes.TsVertAlignment; //(vaDefault, vaTop, vaCenter, vaBottom);
-
   TSheetSelectEvent = procedure of object;
 
   TSheetColumnType = (

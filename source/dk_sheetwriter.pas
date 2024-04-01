@@ -10,7 +10,6 @@ uses
   DK_SheetUtils, DK_Math, DK_PPI, Math;
 
 type
-  TsHorAlignment = fpsTypes.TsHorAlignment;
   TCellBorderType = (cbtNone, cbtLeft, cbtRight, cbtTop, cbtBottom,
                      cbtOuter, cbtInner, cbtAll);
 
