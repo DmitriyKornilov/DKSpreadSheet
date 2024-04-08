@@ -49,7 +49,8 @@ type
     function GetCellColor(const ARow, ACol: Integer): TsColor;
     function GetCellSelectionIndex(const ARow, ACol: Integer): Integer;
   public
-    constructor Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid = nil);
+    constructor Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid;
+                       const AFont: TFont);
     destructor  Destroy; override;
     procedure Zoom(const APercents: Integer);
     procedure SetFontDefault;
@@ -57,6 +58,8 @@ type
                    const ADoneMessage: String = 'Выполнено!';
                    const ALandscape: Boolean = False);
 
+    procedure BordersDraw(const ARow1: Integer = 0; const ARow2: Integer = 0;
+                          const ACol1: Integer = 0; const ACol2: Integer = 0);
     procedure ColorsUpdate(const AColorVector: TColorVector);
     procedure ColorsClear;
     property  ColorIsNeed: Boolean read FColorIsNeed write SetColorIsNeed;
@@ -123,10 +126,14 @@ begin
   end;
 end;
 
-constructor TCustomSheet.Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid = nil);
+constructor TCustomSheet.Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid;
+                                const AFont: TFont);
 begin
   FFont:= TFont.Create;
-  SetFontDefault;
+  if Assigned(AFont) then
+    Font:= AFont
+  else
+    SetFontDefault;
   FColorIsNeed:= True;
   FWriter:= TSheetWriter.Create(SetWidths, AWorksheet, AGrid);
 end;
@@ -165,6 +172,26 @@ begin
   finally
     FreeAndNil(Exporter);
   end;
+end;
+
+procedure TCustomSheet.BordersDraw(const ARow1: Integer = 0; const ARow2: Integer = 0;
+                                   const ACol1: Integer = 0; const ACol2: Integer = 0);
+var
+  i, j, R1, R2, C1, C2: Integer;
+begin
+  R1:= 1;
+  if ARow1>R1 then R1:= ARow1;
+  R2:= Writer.RowCount;
+  if (ARow2>0) and (ARow2<R2) then R2:= ARow2;
+
+  C1:= 1;
+  if ACol1>C1 then C1:= ACol1;
+  C2:= Writer.ColCount;
+  if (ACol2>0) and (ACol2<C2) then C2:= ACol2;
+
+  for i:= R1 to R2 do
+    for j:= C1 to C2 do
+      Writer.DrawBorders(i, j, cbtOuter);
 end;
 
 procedure TCustomSheet.ColorsUpdate(const AColorVector: TColorVector);
