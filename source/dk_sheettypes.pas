@@ -35,15 +35,14 @@ type
 
   TCustomSheet = class (TObject)
   protected
+    FSelectedRows: TIntVector;
+    FSelectedCols: TIntVector;
     function SetWidths: TIntVector; virtual; abstract;
   private
     FWriter: TSheetWriter;
     FFont: TFont;
     FColorVector: TColorVector;
     FColorIsNeed: Boolean;
-    FSelectedRows: TIntVector;
-    FSelectedCols: TIntVector;
-
     procedure SetColorIsNeed(AValue: Boolean);
     procedure SetFont(AValue: TFont);
     function GetCellColor(const ARow, ACol: Integer): TsColor;
@@ -65,7 +64,7 @@ type
     property  ColorIsNeed: Boolean read FColorIsNeed write SetColorIsNeed;
     procedure SelectionAddCell(const ARow, ACol: Integer);
     procedure SelectionDelCell(const ARow, ACol: Integer);
-    procedure SelectionClear;
+    procedure SelectionClear; virtual;
     property Font: TFont read FFont write SetFont;
     property Writer: TSheetWriter read FWriter;
   end;
@@ -181,17 +180,17 @@ var
 begin
   R1:= 1;
   if ARow1>R1 then R1:= ARow1;
-  R2:= Writer.RowCount;
+  R2:= FWriter.RowCount;
   if (ARow2>0) and (ARow2<R2) then R2:= ARow2;
 
   C1:= 1;
   if ACol1>C1 then C1:= ACol1;
-  C2:= Writer.ColCount;
+  C2:= FWriter.ColCount;
   if (ACol2>0) and (ACol2<C2) then C2:= ACol2;
 
   for i:= R1 to R2 do
     for j:= C1 to C2 do
-      Writer.DrawBorders(i, j, cbtOuter);
+      FWriter.DrawBorders(i, j, cbtOuter);
 end;
 
 procedure TCustomSheet.ColorsUpdate(const AColorVector: TColorVector);
@@ -232,11 +231,17 @@ begin
 end;
 
 procedure TCustomSheet.SelectionClear;
+var
+  i: Integer;
+  R, C: TIntVector;
 begin
-  FSelectedRows:= nil;
-  FSelectedCols:= nil;
-  FWriter.ApplyBGColors(FColorVector);
+  R:= VCut(FSelectedRows);
+  C:= VCut(FSelectedCols);
+  for i:= 0 to High(R) do
+    SelectionDelCell(R[i], C[i]);
 end;
+
+
 
 end.
 
