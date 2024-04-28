@@ -9,7 +9,7 @@ interface
 
 uses
   DK_SheetConst, DK_SheetExporter, DK_SheetWriter, DK_SheetUtils, 
-  DK_SheetTables, DK_SheetTypes, LazarusPackageIntf;
+  DK_SheetTables, DK_SheetTypes, DK_SheetExportFolderForm, LazarusPackageIntf;
 
 implementation
 

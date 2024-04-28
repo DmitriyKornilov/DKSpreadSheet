@@ -5,8 +5,10 @@ unit DK_SheetExporter;
 interface
 
 uses
-  Classes, SysUtils, DK_Dialogs, DK_StrUtils, DK_SheetConst, Dialogs,
-  fpstypes, fpspreadsheet, fpspreadsheetgrid, fpsallformats;
+  Classes, SysUtils, Dialogs,
+  fpstypes, fpspreadsheet, fpspreadsheetgrid, fpsallformats,
+  DK_Dialogs, DK_StrUtils, DK_SheetConst, DK_SheetExportFolderForm;
+
 
 const
   spoPortrait  = fpsTypes.spoPortrait;
@@ -55,7 +57,7 @@ type
 
   TSingleExporter = class (TCustomExporter)
   private
-    procedure SetSheetName(const AName: String);
+    procedure SetSheetName(const ASheetName: String);
     function GetSheetName: String;
   public
     property SheetName: String read GetSheetName write SetSheetName;
@@ -81,7 +83,35 @@ type
   public
     constructor Create;
     destructor  Destroy; override;
-    function AddWorksheet(const AName: String): TsWorksheet;
+    function AddWorksheet(const ASheetName: String): TsWorksheet;
+  end;
+
+  { TBooksExporter }
+
+  TBooksExporter = class (TObject)
+  private
+    FWorkbook: TsWorkbook;
+    FFolderName: String;
+    FFileExtension: String;
+    FFormat: TsSpreadsheetFormat;
+    FCanExport: Boolean;
+  public
+    constructor Create;
+    destructor  Destroy; override;
+    function BeginExport: Boolean;
+    procedure EndExport(const ADoneMessage: String = '');
+    procedure Save(const AFileName: String);
+    function AddWorksheet(const ASheetName: String): TsWorksheet;
+    procedure PageSettings(const AOrient: TsPageOrientation = spoPortrait;
+                           const APageFit: TPageFit = pfWidth;
+                           const AShowHeaders: Boolean = True;
+                           const AShowGridLines: Boolean = True;
+                           const ATopMargin: Double=10;     //mm
+                           const ALeftMargin: Double=10;    //mm
+                           const ARightMargin: Double=10;   //mm
+                           const ABottomMargin: Double=10;  //mm
+                           const AFooterMargin: Double=0;   //mm
+                           const AHeaderMargin: Double=0);  //mm
   end;
 
   function TextToSheetName(const AText: String): String;
@@ -261,9 +291,9 @@ end;
 
 { TSingleExporter }
 
-procedure TSingleExporter.SetSheetName(const AName: String);
+procedure TSingleExporter.SetSheetName(const ASheetName: String);
 begin
-  FWorkbook.ActiveWorksheet.Name:= TextToSheetName(AName);
+  FWorkbook.ActiveWorksheet.Name:= TextToSheetName(ASheetName);
 end;
 
 function TSingleExporter.GetSheetName: String;
@@ -301,11 +331,87 @@ begin
   inherited Destroy;
 end;
 
-function TSheetsExporter.AddWorksheet(const AName: String): TsWorksheet;
+function TSheetsExporter.AddWorksheet(const ASheetName: String): TsWorksheet;
 begin
-  Result:= FWorkbook.AddWorksheet(TextToSheetName(AName));
+  Result:= FWorkbook.AddWorksheet(TextToSheetName(ASheetName));
   FWorkbook.ActiveWorksheet:= Result;
   PageSettings;
+end;
+
+{ TBooksExporter }
+
+constructor TBooksExporter.Create;
+begin
+  FCanExport:= False;
+end;
+
+destructor TBooksExporter.Destroy;
+begin
+  if Assigned(FWorkbook) then FreeAndNil(FWorkbook);
+  inherited Destroy;
+end;
+
+function TBooksExporter.BeginExport: Boolean;
+var
+  FileType: Byte;
+begin
+  FFolderName:= EmptyStr;
+  FileType:= 0;
+  Result:= SheetExportFolderFormOpen(FFolderName, FileType);
+  if not Result then Exit;
+  case FileType of
+  0:
+    begin
+      FFormat:= sfOOXML;
+      FFileExtension:= '.xlsx';
+    end;
+  1:
+    begin
+      FFormat:= sfOpenDocument;
+      FFileExtension:= '.ods';
+    end;
+  end;
+  FCanExport:= True;
+end;
+
+procedure TBooksExporter.EndExport(const ADoneMessage: String = '');
+begin
+  if ADoneMessage<>EmptyStr then
+    ShowInfo(ADoneMessage);
+end;
+
+procedure TBooksExporter.Save(const AFileName: String);
+var
+  FullFileName: String;
+begin
+  if not FCanExport then Exit;
+
+  FullFileName:= FFolderName + DirectorySeparator + AFileName + FFileExtension;
+  SaveToFormat(FWorkbook, FFormat, EmptyStr, FullFileName, True);
+end;
+
+function TBooksExporter.AddWorksheet(const ASheetName: String): TsWorksheet;
+begin
+  if Assigned(FWorkbook) then FreeAndNil(FWorkbook);
+  FWorkbook:= TsWorkbook.Create;
+  Result:= FWorkbook.AddWorksheet(TextToSheetName(ASheetName));
+end;
+
+procedure TBooksExporter.PageSettings(const AOrient: TsPageOrientation = spoPortrait;
+                           const APageFit: TPageFit = pfWidth;
+                           const AShowHeaders: Boolean = True;
+                           const AShowGridLines: Boolean = True;
+                           const ATopMargin: Double=10;     //mm
+                           const ALeftMargin: Double=10;    //mm
+                           const ARightMargin: Double=10;   //mm
+                           const ABottomMargin: Double=10;  //mm
+                           const AFooterMargin: Double=0;   //mm
+                           const AHeaderMargin: Double=0);
+begin
+  SheetPageSettings(FWorkBook.ActiveWorksheet, AOrient, APageFit,
+              AShowHeaders, AShowGridLines,
+              ATopMargin, ALeftMargin, ARightMargin, ABottomMargin,
+              AFooterMargin, AHeaderMargin);
 end;
 
 end.

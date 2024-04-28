@@ -39,6 +39,10 @@
         <Filename Value="source\dk_sheettypes.pas"/>
         <UnitName Value="DK_SheetTypes"/>
       </Item>
+      <Item>
+        <Filename Value="source\dk_sheetexportfolderform.pas"/>
+        <UnitName Value="dk_sheetexportfolderform"/>
+      </Item>
     </Files>
     <RequiredPkgs>
       <Item>
