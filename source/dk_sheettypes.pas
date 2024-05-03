@@ -37,6 +37,8 @@ type
   protected
     FSelectedRows: TIntVector;
     FSelectedCols: TIntVector;
+    FSelectedExtraRow: Integer;
+    FSelectedExtraCol: Integer;
     function SetWidths: TIntVector; virtual; abstract;
   private
     FWriter: TSheetWriter;
@@ -62,9 +64,13 @@ type
     procedure ColorsUpdate(const AColorVector: TColorVector);
     procedure ColorsClear;
     property  ColorIsNeed: Boolean read FColorIsNeed write SetColorIsNeed;
+
     procedure SelectionAddCell(const ARow, ACol: Integer);
     procedure SelectionDelCell(const ARow, ACol: Integer);
     procedure SelectionClear; virtual;
+    procedure SelectionExtraAddCell(const ARow, ACol: Integer);
+    procedure SelectionExtraClear;
+
     property Font: TFont read FFont write SetFont;
     property Writer: TSheetWriter read FWriter;
   end;
@@ -239,6 +245,32 @@ begin
   C:= VCut(FSelectedCols);
   for i:= 0 to High(R) do
     SelectionDelCell(R[i], C[i]);
+end;
+
+procedure TCustomSheet.SelectionExtraAddCell(const ARow, ACol: Integer);
+var
+  Cl: TsColor;
+begin
+  FSelectedExtraRow:= ARow;
+  FSelectedExtraCol:= ACol;
+  Cl:= DefaultSelectionBGExtraColor;
+  FWriter.Worksheet.WriteBackground(ARow, ACol, fsSolidFill, Cl, Cl);
+end;
+
+procedure TCustomSheet.SelectionExtraClear;
+var
+  CellSelectionIndex: Integer;
+  Cl: TsColor;
+begin
+  if (FSelectedExtraRow<0) or (FSelectedExtraCol<0) then Exit;
+  CellSelectionIndex:= GetCellSelectionIndex(FSelectedExtraRow, FSelectedExtraCol);
+  if CellSelectionIndex>=0 then
+    Cl:= DefaultSelectionBGColor
+  else
+    Cl:= GetCellColor(FSelectedExtraRow, FSelectedExtraCol);
+  FWriter.Worksheet.WriteBackground(FSelectedExtraRow, FSelectedExtraCol, fsSolidFill, Cl, Cl);
+  FSelectedExtraRow:= -1;
+  FSelectedExtraCol:= -1;
 end;
 
 
