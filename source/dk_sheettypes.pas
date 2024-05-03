@@ -49,7 +49,7 @@ type
     function GetCellSelectionIndex(const ARow, ACol: Integer): Integer;
   public
     constructor Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid;
-                       const AFont: TFont);
+                       const AFont: TFont; const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
     destructor  Destroy; override;
     procedure Zoom(const APercents: Integer);
     procedure SetFontDefault;
@@ -126,7 +126,7 @@ begin
 end;
 
 constructor TCustomSheet.Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid;
-                                const AFont: TFont);
+                                const AFont: TFont; const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
 begin
   FFont:= TFont.Create;
   if Assigned(AFont) then
@@ -134,7 +134,7 @@ begin
   else
     SetFontDefault;
   FColorIsNeed:= True;
-  FWriter:= TSheetWriter.Create(SetWidths, AWorksheet, AGrid);
+  FWriter:= TSheetWriter.Create(SetWidths, AWorksheet, AGrid, ARowHeightDefault);
 end;
 
 destructor TCustomSheet.Destroy;
