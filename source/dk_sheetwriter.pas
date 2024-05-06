@@ -123,6 +123,8 @@ type
     procedure SetBackground(const ABGStyle: TsFillStyle; const ABGColor: TColor;  const APatternColor: TColor);
     procedure SetBackground(const ABGColor: TsColor);
     procedure SetBackground(const ABGColor: TColor);
+    procedure WriteBackground(ARow, ACol: Integer);
+    procedure WriteBackground(ARow1, ACol1, ARow2, ACol2: Integer);
     //Borders
     procedure SetBordersDefault;
     procedure SetBordersStyle(const ALeftStyle,ARightStyle,ATopStyle,ABottomStyle,AInnerStyle: TsLineStyle);
@@ -240,6 +242,7 @@ type
     function ColsWidth(const ACol1, ACol2: Integer): Integer;
     property RowHeight[const ARow: Integer]: Integer read GetRowHeight;
     property ColWidth[const ACol: Integer]: Integer read GetColWidth;
+    property RowHeightDefault: Integer read FRowHeightDefault;
 
     property WorkSheet: TsWorkSheet read FWorkSheet;
     property Grid: TsWorksheetGrid read FGrid;
@@ -1254,6 +1257,20 @@ end;
 procedure TSheetWriter.SetBackground(const ABGColor: TColor);
 begin
   SetBackground(fsSolidFill, ABGColor, ABGColor);
+end;
+
+procedure TSheetWriter.WriteBackground(ARow, ACol: Integer);
+begin
+  FWorksheet.WriteBackground(ARow, ACol, FBGStyle, FPatternColor, FBGColor);
+end;
+
+procedure TSheetWriter.WriteBackground(ARow1, ACol1, ARow2, ACol2: Integer);
+var
+  i, j: Integer;
+begin
+  for i:= ARow1 to ARow2 do
+    for j:= ACol1 to ACol2 do
+      WriteBackground(i, j);
 end;
 
 procedure TSheetWriter.SetFontDefault;
