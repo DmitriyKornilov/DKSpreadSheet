@@ -6,6 +6,7 @@ object SheetExportFolderForm: TSheetExportFolderForm
   AutoSize = True
   BorderIcons = [biSystemMenu]
   BorderStyle = bsSingle
+  Caption = 'Параметры'
   ClientHeight = 150
   ClientWidth = 600
   Constraints.MinHeight = 150
