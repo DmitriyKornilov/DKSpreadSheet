@@ -9,6 +9,7 @@
       <Version Value="11"/>
       <PathDelim Value="\"/>
       <SearchPaths>
+        <IncludeFiles Value="source;source\png"/>
         <OtherUnitFiles Value="source"/>
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
@@ -41,7 +42,27 @@
       </Item>
       <Item>
         <Filename Value="source\dk_sheetexportfolderform.pas"/>
-        <UnitName Value="dk_sheetexportfolderform"/>
+        <UnitName Value="DK_SheetExportFolderForm"/>
+      </Item>
+      <Item>
+        <Filename Value="source\dk_sheetexportfolderform.lfm"/>
+        <Type Value="LFM"/>
+      </Item>
+      <Item>
+        <Filename Value="source\png\cancel.png"/>
+        <Type Value="Binary"/>
+      </Item>
+      <Item>
+        <Filename Value="source\png\folder.png"/>
+        <Type Value="Binary"/>
+      </Item>
+      <Item>
+        <Filename Value="source\png\icons_info.txt"/>
+        <Type Value="Text"/>
+      </Item>
+      <Item>
+        <Filename Value="source\png\save.png"/>
+        <Type Value="Binary"/>
       </Item>
     </Files>
     <RequiredPkgs>

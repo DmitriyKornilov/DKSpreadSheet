@@ -21,10 +21,15 @@ type
     FolderLabel: TLabel;
     FileTypeLabel: TLabel;
     FolderButton: TSpeedButton;
+    PX24: TImageList;
+    PX30: TImageList;
+    PX36: TImageList;
+    PX42: TImageList;
     SaveButton: TSpeedButton;
     FolderDialog: TSelectDirectoryDialog;
     procedure CancelButtonClick(Sender: TObject);
     procedure FolderButtonClick(Sender: TObject);
+    procedure FormShow(Sender: TObject);
     procedure SaveButtonClick(Sender: TObject);
   private
 
@@ -70,6 +75,21 @@ procedure TSheetExportFolderForm.FolderButtonClick(Sender: TObject);
 begin
   if not FolderDialog.Execute then Exit;
   FolderEdit.Text:= FolderDialog.Filename;
+end;
+
+procedure TSheetExportFolderForm.FormShow(Sender: TObject);
+var
+  Images: TImageList;
+begin
+  case Screen.PixelsPerInch of
+    96 : Images:= PX24;
+    120: Images:= PX30;
+    144: Images:= PX36;
+    168: Images:= PX42;
+  end;
+  FolderButton.Images:= Images;
+  SaveButton.Images:= Images;
+  CancelButton.Images:= Images;
 end;
 
 procedure TSheetExportFolderForm.SaveButtonClick(Sender: TObject);
