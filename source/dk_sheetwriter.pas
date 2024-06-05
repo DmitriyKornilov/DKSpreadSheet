@@ -476,7 +476,7 @@ begin
   FRowHeights[ARow]:= AValue; // AValue is Height for default PPI=96
   H:= ApplyZoom(AValue);      // Height for current sheet zoom factor
   if HasGrid then
-    FGrid.RowHeights[ARow]:= HeightFromDefaultToScreen(H); //Height for current Screen PPI
+    FGrid.RowHeights[ARow]:= FGrid.Scale96ToScreen(H); //Height for current Screen PPI
   FWorksheet.WriteRowHeight(ARow, PixelToMillimeter(H), suMillimeters);
 end;
 
