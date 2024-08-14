@@ -46,12 +46,16 @@ type
     FFont: TFont;
     FColorVector: TColorVector;
     FColorIsNeed: Boolean;
+
     procedure SetColorIsNeed(AValue: Boolean);
     procedure SetFont(AValue: TFont);
     function GetCellColor(const ARow, ACol: Integer): TsColor;
 
     function GetCellSelectionIndex(const ARow, ACol: Integer): Integer;
     function GetCellSelectionExtraIndex(const ARow, ACol: Integer): Integer;
+
+    function GetShowFrozenLine: Boolean;
+    procedure SetShowFrozenLine(AValue: Boolean);
   public
     constructor Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid;
                        const AFont: TFont; const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
@@ -78,6 +82,7 @@ type
 
     property Font: TFont read FFont write SetFont;
     property Writer: TSheetWriter read FWriter;
+    property ShowFrozenLine: Boolean read GetShowFrozenLine write SetShowFrozenLine;
   end;
 
 implementation
@@ -129,6 +134,16 @@ end;
 function TCustomSheet.GetCellSelectionExtraIndex(const ARow, ACol: Integer): Integer;
 begin
   Result:= VIndexOf(FSelectedExtraRows, FSelectedExtraCols, ARow, ACol);
+end;
+
+function TCustomSheet.GetShowFrozenLine: Boolean;
+begin
+  Result:= Writer.ShowFrozenLine;
+end;
+
+procedure TCustomSheet.SetShowFrozenLine(AValue: Boolean);
+begin
+  Writer.ShowFrozenLine:= AValue;
 end;
 
 constructor TCustomSheet.Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid;

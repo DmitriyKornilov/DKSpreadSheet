@@ -24,6 +24,7 @@ type
     FFirstCol: Integer;
     FFirstRow: Integer;
     FRowHeightDefault: Integer;
+    FShowFrozenLine: Boolean;
     //Color
     FBGColorMatrix: TIntMatrix;
     //Font
@@ -92,6 +93,7 @@ type
     procedure SetGridColCount(const ACount: Integer);
 
     procedure SetDefaultGridSettings;
+    procedure SetShowFrozenLine(const AValue: Boolean);
   public
     constructor Create(const AColWidths: TIntVector; const AWorksheet: TsWorksheet;
                        const AGrid: TsWorksheetGrid = nil;
@@ -138,6 +140,8 @@ type
     procedure SetBorders(const AOuterStyle: TsLineStyle; const AOuterColor: TColor; const AInnerStyle: TsLineStyle; const AInnerColor: TColor);
     procedure DrawBorders(ARow, ACol: Integer; const ABordersType: TCellBorderType);
     procedure DrawBorders(ARow1, ACol1, ARow2, ACol2: Integer; const ABordersType: TCellBorderType);
+    //Frozen Pane Border
+    property ShowFrozenLine: Boolean read FShowFrozenLine write SetShowFrozenLine;
     //Zoom
     procedure SetZoom(const APercents: Integer);
     function ApplyZoom(const AValue: Integer): Integer;
@@ -883,7 +887,17 @@ begin
   FGrid.ShowHeaders:= False;
   FGrid.SelectionPen.Style:= psClear;
   FGrid.DefaultRowHeight:= FRowHeightDefault;
-  FGrid.FrozenBorderPen.Style:= psClear;
+  ShowFrozenLine:= False;
+end;
+
+procedure TSheetWriter.SetShowFrozenLine(const AValue: Boolean);
+begin
+  if FShowFrozenLine=AValue then Exit;
+  FShowFrozenLine:= AValue;
+  if FShowFrozenLine then
+    FGrid.FrozenBorderPen.Style:= psSolid
+  else
+    FGrid.FrozenBorderPen.Style:= psClear;
 end;
 
 procedure TSheetWriter.SetCellMainSettings(const ARow, ACol: Integer; const AWordWrap: Boolean);
