@@ -5,12 +5,16 @@ unit DK_SheetTables;
 interface
 
 uses
-  Classes, SysUtils, Graphics, Controls, fpsTypes, fpspreadsheetgrid,
+  Classes, SysUtils, Graphics, Controls, LCLType, fpsTypes, fpspreadsheetgrid,
   DK_Const, DK_Vector, DK_Matrix, DK_StrUtils,  DK_SheetWriter, DK_Color,
-  DK_SheetExporter;
+  DK_SheetExporter, DK_SheetTypes, DK_SheetConst;
+
+const
+  LAST_COLUMN_NUMBER_FOR_AUTOSIZE = -1;
+  NONE_COLUMN_NUMBER_FOR_AUTOSIZE = 0;
 
 type
-  TSheetSelectEvent = procedure of object;
+  TSheetEvent = procedure of object;
 
   TSheetColumnType = (
     ctUndefined,
@@ -20,6 +24,67 @@ type
     ctDate,
     ctTime
   );
+
+  { TCustomSheetTable }
+
+  TCustomSheetTable = class (TCustomSheet)
+  private
+    FAutosizeColumnNumber: Integer;
+    FAutosizeColumnWidthBefore: Integer;
+
+    function GetIsSelected: Boolean;
+    procedure SetCanSelect(const AValue: Boolean);
+    procedure SetCanUnselect(const AValue: Boolean);
+
+    procedure ChangeBounds(Sender: TObject);
+    procedure MouseDown(Sender: TObject; Button: TMouseButton;
+                       {%H-}Shift: TShiftState; X, Y: Integer);
+    procedure KeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
+  protected
+    FOnSelect: TSheetEvent;
+    FOnReturn: TSheetEvent;
+
+    FSelectedIndex: Integer;
+    FCanSelect: Boolean;
+    FCanUnselect: Boolean;
+
+    function IsCellSelectable(const ARow, ACol: Integer): Boolean; virtual;
+    procedure Select(const ARow, ACol: Integer); virtual; abstract;
+    procedure Unselect; virtual; abstract;
+    procedure SelectionMove(const AVertDelta: Integer); virtual; abstract;
+
+    //data rows to freeze and border drawing
+    function FirstDataRow: Integer; virtual; abstract;
+    function LastDataRow: Integer; virtual; abstract;
+
+    //data vectors index and grid row
+    function RowToIndex(const ARow: Integer): Integer; virtual;
+    function IndexToRow(const AIndex: Integer): Integer; virtual;
+  public
+    constructor Create(const AWorksheet: TsWorksheet;
+                       const AGrid: TsWorksheetGrid;
+                       const AFont: TFont;
+                       const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
+
+    procedure DrawingBegin;
+    procedure DrawingEnd;
+
+    procedure AutosizeColumnEnable(const AColNumber: Integer);
+    procedure AutosizeColumnEnableLast;
+    procedure AutosizeColumnDisable;
+    procedure AutoSizeColumnWidths;
+
+    procedure SetSelection(const ARow, ACol: Integer; const ADoEvent: Boolean = True);
+    procedure DelSelection(const ADoEvent: Boolean = True);
+
+    property IsSelected: Boolean read GetIsSelected;
+    property SelectedIndex: Integer read FSelectedIndex;
+    property CanSelect: Boolean read FCanSelect write SetCanSelect;
+    property CanUnselect: Boolean read FCanUnselect write SetCanUnselect;
+    property OnSelect: TSheetEvent read FOnSelect write FOnSelect;
+
+    property OnReturn: TSheetEvent read FOnReturn write FOnReturn;
+  end;
 
   { TSheetTable }
 
@@ -42,7 +107,7 @@ type
     procedure MouseDown(Sender: TObject; Button: TMouseButton;
       {%H-}Shift: TShiftState; X, Y: Integer);
   protected
-    FOnSelect: TSheetSelectEvent;
+    FOnSelect: TSheetEvent;
 
     FGrid: TsWorksheetGrid;
     FWriter: TSheetWriter;
@@ -210,11 +275,202 @@ type
     property CanSelect: Boolean read FCanSelect write SetCanSelect;
     property CanUnselect: Boolean read FCanUnselect write SetCanUnselect;
 
-    property OnSelect: TSheetSelectEvent read FOnSelect write FOnSelect;
+    property OnSelect: TSheetEvent read FOnSelect write FOnSelect;
   end;
 
 
 implementation
+
+{ TCustomSheetTable }
+
+function TCustomSheetTable.GetIsSelected: Boolean;
+begin
+  Result:= FSelectedIndex>=0;
+end;
+
+procedure TCustomSheetTable.SetCanSelect(const AValue: Boolean);
+begin
+  if FCanSelect=AValue then Exit;
+  if not AValue then Unselect;
+  FCanSelect:= AValue;
+end;
+
+procedure TCustomSheetTable.SetCanUnselect(const AValue: Boolean);
+begin
+  if FCanUnselect=AValue then Exit;
+  FCanUnselect:= AValue;
+end;
+
+procedure TCustomSheetTable.SetSelection(const ARow, ACol: Integer;
+  const ADoEvent: Boolean = True);
+begin
+  if not CanSelect then Exit;
+  if not IsCellSelectable(ARow, ACol) then Exit;
+
+  if IsSelected then Unselect;
+  Select(ARow, ACol);
+  if ADoEvent and Assigned(FOnSelect) then FOnSelect;
+end;
+
+procedure TCustomSheetTable.DelSelection(const ADoEvent: Boolean = True);
+begin
+  if not (IsSelected and CanUnselect) then Exit;
+  Unselect;
+  if ADoEvent and Assigned(FOnSelect) then FOnSelect;
+end;
+
+
+
+procedure TCustomSheetTable.ChangeBounds(Sender: TObject);
+begin
+  AutoSizeColumnWidths;
+end;
+
+procedure TCustomSheetTable.MouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  R, C: Integer;
+begin
+  if Button=mbLeft then
+  begin
+    (Sender as TsWorksheetGrid).MouseToCell(X, Y, C, R);
+    SetSelection(R, C);
+  end
+  else if Button=mbRight then
+  begin
+    DelSelection;
+  end;
+end;
+
+procedure TCustomSheetTable.KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+  //if not IsSelected then Exit;
+  case Key of
+    VK_UP: SelectionMove(-1);
+    VK_DOWN: SelectionMove(1);
+    VK_RETURN: if Assigned(FOnReturn) then FOnReturn;
+  end;
+end;
+
+function TCustomSheetTable.IsCellSelectable(const ARow, ACol: Integer): Boolean;
+begin
+  Result:= ((ACol>=1) and (ACol<=Writer.ColCount) and
+            (ARow>=FirstDataRow) and (ARow<=LastDataRow));
+end;
+
+function TCustomSheetTable.RowToIndex(const ARow: Integer): Integer;
+begin
+  Result:= -1;
+  if (ARow>=FirstDataRow) and (ARow<=LastDataRow) then
+    Result:= ARow - FirstDataRow;
+end;
+
+function TCustomSheetTable.IndexToRow(const AIndex: Integer): Integer;
+begin
+  Result:= -1;
+  if AIndex<0 then Exit;
+  Result:= FirstDataRow + AIndex;
+end;
+
+constructor TCustomSheetTable.Create(const AWorksheet: TsWorksheet;
+                       const AGrid: TsWorksheetGrid;
+                       const AFont: TFont;
+                       const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
+begin
+  inherited Create(AWorksheet, AGrid, AFont, ARowHeightDefault);
+
+  FSelectedIndex:= -1;
+  FCanSelect:= True;
+  FCanUnselect:= True;
+
+  if not Writer.HasGrid then Exit;
+  AutosizeColumnEnableLast;
+  Writer.Grid.OnMouseDown:= @MouseDown;
+  Writer.Grid.OnChangeBounds:= @ChangeBounds;
+  Writer.Grid.OnKeyDown:= @KeyDown;
+
+end;
+
+procedure TCustomSheetTable.DrawingBegin;
+begin
+  DelSelection({False});
+  Writer.BeginEdit;
+end;
+
+procedure TCustomSheetTable.DrawingEnd;
+var
+  i, R: Integer;
+begin
+  //freeze caption
+  R:= FirstDataRow;
+  if (R>1) and (Writer.RowCount>R) then
+    Writer.SetFrozenRows(R-1);
+
+  //fix drawing last horizontal line
+  R:= LastDataRow + 1;
+  for i:= 1 to Writer.ColCount do
+    Writer.WriteText(R, i, EmptyStr, cbtTop);
+
+  Writer.EndEdit;
+  AutoSizeColumnWidths;
+end;
+
+procedure TCustomSheetTable.AutoSizeColumnWidths;
+var
+  W, ColNum: Integer;
+begin
+  if not Writer.HasGrid then Exit;
+  ColNum:= 0;
+  if FAutosizeColumnNumber=LAST_COLUMN_NUMBER_FOR_AUTOSIZE then
+     ColNum:= Writer.ColCount
+  else if FAutosizeColumnNumber>=1 then
+     ColNum:= FAutosizeColumnNumber
+  else Exit;
+
+  if ColNum=0 then  //autosize disable FAutosizeColumnWidthBefore
+  begin
+
+  end
+  else begin //autosize enable
+
+  end;
+
+  W:= Writer.ColsWidth(1, Writer.ColCount) - Writer.ColWidth[ColNum];
+  W:= Writer.Grid.Width - Writer.Grid.Scale96ToScreen(W+18);
+  W:= Writer.Grid.ScaleScreenTo96(W);
+  Writer.SetColWidth(ColNum, W);
+end;
+
+procedure TCustomSheetTable.AutosizeColumnEnable(const AColNumber: Integer);
+begin
+  if FAutosizeColumnNumber=AColNumber then Exit;
+  if ((AColNumber<1) and (AColNumber<>LAST_COLUMN_NUMBER_FOR_AUTOSIZE)) or
+     (AColNumber>Writer.ColCount) then Exit;
+
+  FAutosizeColumnWidthBefore:= Writer.ColWidth[AColNumber];
+  FAutosizeColumnNumber:= AColNumber;
+  AutoSizeColumnWidths;
+end;
+
+procedure TCustomSheetTable.AutosizeColumnEnableLast;
+begin
+  AutosizeColumnEnable(LAST_COLUMN_NUMBER_FOR_AUTOSIZE);
+end;
+
+procedure TCustomSheetTable.AutosizeColumnDisable;
+var
+  ColNum: Integer;
+begin
+  if FAutosizeColumnNumber= NONE_COLUMN_NUMBER_FOR_AUTOSIZE then Exit;
+
+  if FAutosizeColumnNumber=LAST_COLUMN_NUMBER_FOR_AUTOSIZE then
+     ColNum:= Writer.ColCount
+  else
+     ColNum:= FAutosizeColumnNumber;
+
+  Writer.SetColWidth(ColNum, FAutosizeColumnWidthBefore);
+  FAutosizeColumnNumber:= NONE_COLUMN_NUMBER_FOR_AUTOSIZE;
+end;
 
 { TSheetTable }
 
@@ -268,7 +524,7 @@ end;
 procedure TSheetTable.MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 var
-  R,C: Integer;
+  R, C: Integer;
 begin
   if not CanSelect then Exit;
 
