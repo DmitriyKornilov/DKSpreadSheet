@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Buttons,
-  ExtCtrls, DK_StrUtils, DK_Dialogs;
+  ExtCtrls, DK_StrUtils, DK_CtrlUtils, DK_Dialogs;
 
 type
 
@@ -81,12 +81,7 @@ procedure TSheetExportFolderForm.FormShow(Sender: TObject);
 var
   Images: TImageList;
 begin
-  case Screen.PixelsPerInch of
-    96 : Images:= PX24;
-    120: Images:= PX30;
-    144: Images:= PX36;
-    168: Images:= PX42;
-  end;
+  Images:= ChooseImageListForScreenPPI(PX24, PX30, PX36, PX42);
   FolderButton.Images:= Images;
   SaveButton.Images:= Images;
   CancelButton.Images:= Images;
