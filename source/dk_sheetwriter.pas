@@ -332,6 +332,7 @@ var
   i, R, C: Integer;
   Cl: TsColor;
 begin
+  if VIsNil(ABGColors) then Exit;
   for i:= 0 to High(FBGColorMatrix) do
   begin
     R:= FBGColorMatrix[i,0];
