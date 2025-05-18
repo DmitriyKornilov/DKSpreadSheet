@@ -190,7 +190,7 @@ begin
       if not Confirm('Файл "' + FileName +
                      '" уже существует! Перезаписать файл?') then Exit;
   AWorkbook.WriteToFile(FileName, AFormat, True);
-  if ADoneMessage<>EmptyStr then ShowInfo(ADoneMessage);
+  if ADoneMessage<>EmptyStr then Inform(ADoneMessage);
 end;
 
 procedure SaveWithDialog(const AWorkbook: TsWorkbook;
@@ -377,7 +377,7 @@ end;
 procedure TBooksExporter.EndExport(const ADoneMessage: String = '');
 begin
   if ADoneMessage<>EmptyStr then
-    ShowInfo(ADoneMessage);
+    Inform(ADoneMessage);
 end;
 
 procedure TBooksExporter.Save(const AFileName: String);

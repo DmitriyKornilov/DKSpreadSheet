@@ -95,7 +95,7 @@ begin
 
   if SEmpty(S) then
   begin
-    ShowInfo('Не указана папка!');
+    Inform('Не указана папка!');
     Exit;
   end;
 
@@ -105,7 +105,7 @@ begin
     begin
       if not CreateDir(S) then
       begin
-        ShowInfo('Не удалось создать папку "'+ S + '"!');
+        Inform('Не удалось создать папку "'+ S + '"!');
         Exit;
       end;
     end

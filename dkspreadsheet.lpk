@@ -67,6 +67,9 @@
     </Files>
     <RequiredPkgs>
       <Item>
+        <PackageName Value="DKDialogs"/>
+      </Item>
+      <Item>
         <PackageName Value="DKUtils"/>
       </Item>
       <Item>
