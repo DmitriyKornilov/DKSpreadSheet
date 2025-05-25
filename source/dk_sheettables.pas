@@ -42,8 +42,8 @@ type
     procedure KeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
   protected
     FOnSelect: TSheetEvent;
-    FOnReturn: TSheetEvent;
-    FOnDelete: TSheetEvent;
+    FOnReturnKeyDown: TSheetEvent;
+    FOnDelKeyDown: TSheetEvent;
 
     FSelectedIndex: Integer;
     FCanSelect: Boolean;
@@ -87,8 +87,8 @@ type
     property CanUnselect: Boolean read FCanUnselect write SetCanUnselect;
     property OnSelect: TSheetEvent read FOnSelect write FOnSelect;
 
-    property OnReturn: TSheetEvent read FOnReturn write FOnReturn;
-    property OnDelete: TSheetEvent read FOnDelete write FOnDelete;
+    property OnReturnKeyDown: TSheetEvent read FOnReturnKeyDown write FOnReturnKeyDown;
+    property OnDelKeyDown: TSheetEvent read FOnDelKeyDown write FOnDelKeyDown;
   end;
 
   { TSheetTable }
@@ -358,8 +358,8 @@ begin
   case Key of
     VK_UP: SelectionMove(-1);
     VK_DOWN: SelectionMove(1);
-    VK_RETURN: if Assigned(FOnReturn) then FOnReturn;
-    VK_DELETE: if Assigned(FOnDelete) then FOnDelete;
+    VK_RETURN: if Assigned(FOnReturnKeyDown) then FOnReturnKeyDown;
+    VK_DELETE: if Assigned(FOnDelKeyDown) then FOnDelKeyDown;
   end;
 end;
 
