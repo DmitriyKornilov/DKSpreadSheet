@@ -61,6 +61,9 @@ type
     constructor Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid;
                        const AFont: TFont; const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
     destructor  Destroy; override;
+
+    procedure Clear; virtual;
+
     procedure Zoom(const APercents: Integer);
     procedure SetFontDefault;
     procedure Save(const ASheetName: String = 'Лист1';
@@ -189,6 +192,14 @@ begin
   FreeAndNil(FFont);
   FreeAndNil(FWriter);
   inherited Destroy;
+end;
+
+procedure TCustomSheet.Clear;
+begin
+  ColorsClear;
+  SelectionExtraClear;
+  SelectionClear;
+  FWriter.Clear;
 end;
 
 procedure TCustomSheet.Zoom(const APercents: Integer);

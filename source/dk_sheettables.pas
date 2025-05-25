@@ -43,11 +43,13 @@ type
   protected
     FOnSelect: TSheetEvent;
     FOnReturn: TSheetEvent;
+    FOnDelete: TSheetEvent;
 
     FSelectedIndex: Integer;
     FCanSelect: Boolean;
     FCanUnselect: Boolean;
 
+    function GetSelectedIndex: Integer; virtual;
     function IsCellSelectable(const ARow, ACol: Integer): Boolean; virtual;
     procedure Select(const ARow, ACol: Integer); virtual; abstract;
     procedure Unselect; virtual; abstract;
@@ -66,6 +68,8 @@ type
                        const AFont: TFont;
                        const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
 
+    procedure Clear; override;
+
     procedure DrawingBegin;
     procedure DrawingEnd;
 
@@ -78,12 +82,13 @@ type
     procedure DelSelection(const ADoEvent: Boolean = True);
 
     property IsSelected: Boolean read GetIsSelected;
-    property SelectedIndex: Integer read FSelectedIndex;
+    property SelectedIndex: Integer read GetSelectedIndex;
     property CanSelect: Boolean read FCanSelect write SetCanSelect;
     property CanUnselect: Boolean read FCanUnselect write SetCanUnselect;
     property OnSelect: TSheetEvent read FOnSelect write FOnSelect;
 
     property OnReturn: TSheetEvent read FOnReturn write FOnReturn;
+    property OnDelete: TSheetEvent read FOnDelete write FOnDelete;
   end;
 
   { TSheetTable }
@@ -283,6 +288,11 @@ implementation
 
 { TCustomSheetTable }
 
+function TCustomSheetTable.GetSelectedIndex: Integer;
+begin
+  Result:= FSelectedIndex;
+end;
+
 function TCustomSheetTable.GetIsSelected: Boolean;
 begin
   Result:= FSelectedIndex>=0;
@@ -349,6 +359,7 @@ begin
     VK_UP: SelectionMove(-1);
     VK_DOWN: SelectionMove(1);
     VK_RETURN: if Assigned(FOnReturn) then FOnReturn;
+    VK_DELETE: if Assigned(FOnDelete) then FOnDelete;
   end;
 end;
 
@@ -389,6 +400,12 @@ begin
   Writer.Grid.OnChangeBounds:= @ChangeBounds;
   Writer.Grid.OnKeyDown:= @KeyDown;
 
+end;
+
+procedure TCustomSheetTable.Clear;
+begin
+  inherited Clear;
+  FSelectedIndex:= -1;
 end;
 
 procedure TCustomSheetTable.DrawingBegin;
