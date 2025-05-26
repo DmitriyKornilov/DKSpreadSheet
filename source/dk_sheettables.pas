@@ -434,28 +434,18 @@ end;
 
 procedure TCustomSheetTable.AutoSizeColumnWidths;
 var
-  W, ColNum: Integer;
+  W: Integer;
 begin
   if not Writer.HasGrid then Exit;
-  ColNum:= 0;
-  if FAutosizeColumnNumber=LAST_COLUMN_NUMBER_FOR_AUTOSIZE then
-     ColNum:= Writer.ColCount
-  else if FAutosizeColumnNumber>=1 then
-     ColNum:= FAutosizeColumnNumber
-  else Exit;
+  if FAutosizeColumnNumber=NONE_COLUMN_NUMBER_FOR_AUTOSIZE then Exit;
 
-  if ColNum=0 then  //autosize disable FAutosizeColumnWidthBefore
-  begin
-
-  end
-  else begin //autosize enable
-
-  end;
-
-  W:= Writer.ColsWidth(1, Writer.ColCount) - Writer.ColWidth[ColNum];
+  W:= Writer.ColsWidth(1, Writer.ColCount) - Writer.ColWidth[FAutosizeColumnNumber];
   W:= Writer.Grid.Width - Writer.Grid.Scale96ToScreen(W+18);
-  W:= Writer.Grid.ScaleScreenTo96(W);
-  Writer.SetColWidth(ColNum, W);
+  if W<0 then
+    W:= FAutosizeColumnWidthBefore
+  else
+    W:= Writer.Grid.ScaleScreenTo96(W);
+  Writer.SetColWidth(FAutosizeColumnNumber, W);
 end;
 
 procedure TCustomSheetTable.AutosizeColumnEnable(const AColNumber: Integer);
@@ -464,8 +454,12 @@ begin
   if ((AColNumber<1) and (AColNumber<>LAST_COLUMN_NUMBER_FOR_AUTOSIZE)) or
      (AColNumber>Writer.ColCount) then Exit;
 
-  FAutosizeColumnWidthBefore:= Writer.ColWidth[AColNumber];
-  FAutosizeColumnNumber:= AColNumber;
+  if AColNumber=LAST_COLUMN_NUMBER_FOR_AUTOSIZE then
+    FAutosizeColumnNumber:= Writer.ColCount
+  else
+    FAutosizeColumnNumber:= AColNumber;
+  FAutosizeColumnWidthBefore:= Writer.ColWidth[FAutosizeColumnNumber];
+
   AutoSizeColumnWidths;
 end;
 
