@@ -30,7 +30,8 @@ type
   TCustomSheetTable = class (TCustomSheet)
   private
     FAutosizeColumnNumber: Integer;
-    FAutosizeColumnWidthBefore: Integer;
+    FColumnWidthBeforeAutosize: Integer;
+    FWidthWithoutAutosizeColumn: Integer;
 
     function GetIsSelected: Boolean;
     procedure SetCanSelect(const AValue: Boolean);
@@ -439,10 +440,9 @@ begin
   if not Writer.HasGrid then Exit;
   if FAutosizeColumnNumber=NONE_COLUMN_NUMBER_FOR_AUTOSIZE then Exit;
 
-  W:= Writer.ColsWidth(1, Writer.ColCount) - Writer.ColWidth[FAutosizeColumnNumber];
-  W:= Writer.Grid.Width - Writer.Grid.Scale96ToScreen(W+18);
+  W:= Writer.Grid.Width - Writer.Grid.Scale96ToScreen(FWidthWithoutAutosizeColumn+18);
   if W<0 then
-    W:= FAutosizeColumnWidthBefore
+    W:= FColumnWidthBeforeAutosize
   else
     W:= Writer.Grid.ScaleScreenTo96(W);
   Writer.SetColWidth(FAutosizeColumnNumber, W);
@@ -458,7 +458,9 @@ begin
     FAutosizeColumnNumber:= Writer.ColCount
   else
     FAutosizeColumnNumber:= AColNumber;
-  FAutosizeColumnWidthBefore:= Writer.ColWidth[FAutosizeColumnNumber];
+  FColumnWidthBeforeAutosize:= Writer.ColWidth[FAutosizeColumnNumber];
+  FWidthWithoutAutosizeColumn:= Writer.ColsWidth(1, Writer.ColCount) -
+                                  FColumnWidthBeforeAutosize;
 
   AutoSizeColumnWidths;
 end;
@@ -479,7 +481,7 @@ begin
   else
      ColNum:= FAutosizeColumnNumber;
 
-  Writer.SetColWidth(ColNum, FAutosizeColumnWidthBefore);
+  Writer.SetColWidth(ColNum, FColumnWidthBeforeAutosize);
   FAutosizeColumnNumber:= NONE_COLUMN_NUMBER_FOR_AUTOSIZE;
 end;
 
