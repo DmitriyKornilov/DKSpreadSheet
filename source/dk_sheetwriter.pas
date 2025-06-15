@@ -846,24 +846,53 @@ function TSheetWriter.CalcCellHeight(var AText: String; const ACol1, ACol2: Inte
                              const AWrapToWordParts: Boolean = False;
                              const ARedStrWidth: Integer = 0): Integer;
 var
-  CellWidth: Integer;
-  BreakSymbol: String;
+  CellWidth, H, i: Integer;
   Font: TFont;
+  V: TStrVector;
+  S: String;
 begin
-  //if HasGrid then
-  //  BreakSymbol:= SYMBOL_BREAK
-  //else
-    BreakSymbol:= ' ';
   CellWidth:= ColsWidth(ACol1, ACol2);
   CellWidth:= WidthFromDefaultToScreen(CellWidth);
   Font:= TFont.Create;
   Font.Name:= FFontName;
   Font.Size:= Round(FFontSize);
   Font.Style:= FontStyleSheetsToGraphics(FFontStyle);
-  Result:= TextToCell(AText, Font, CellWidth, ARedStrWidth,
-                      ADivideByHyphen, AWrapToWordParts, BreakSymbol);
+
+  V:= VStrToVector(AText, SYMBOL_BREAK);
+  if VIsNil(V) then // в тексте нет разрывов строк
+    Result:= TextToCell(AText, Font, CellWidth, ARedStrWidth,
+                      ADivideByHyphen, AWrapToWordParts, SYMBOL_SPACE {SYMBOL_BREAK})
+  else begin        //в тексте есть разрывы строк
+    Result:= 0;
+    AText:= EmptyStr;
+    for i:= 0 to High(V) do
+    begin
+      S:= STrim(V[i]);
+      H:= TextToCell(S, Font, CellWidth, ARedStrWidth,
+                     ADivideByHyphen, AWrapToWordParts, SYMBOL_SPACE {SYMBOL_BREAK});
+      if SEmpty(S) then continue;
+      if SEmpty(AText) then
+        AText:= S
+      else
+        AText:= AText + SYMBOL_BREAK + S;
+      Result:= Result + H;
+    end;
+  end;
   Result:= HeightFromScreenToDefault(Result);
+
   FreeAndNil(Font);
+
+
+  //CellWidth:= ColsWidth(ACol1, ACol2);
+  //CellWidth:= WidthFromDefaultToScreen(CellWidth);
+  //Font:= TFont.Create;
+  //Font.Name:= FFontName;
+  //Font.Size:= Round(FFontSize);
+  //Font.Style:= FontStyleSheetsToGraphics(FFontStyle);
+  //Result:= TextToCell(AText, Font, CellWidth, ARedStrWidth,
+  //                    ADivideByHyphen, AWrapToWordParts, SYMBOL_BREAK);
+  //Result:= HeightFromScreenToDefault(Result);
+  //FreeAndNil(Font);
 end;
 
 procedure TSheetWriter.SetGridRowCount(const ACount: Integer);
