@@ -849,50 +849,46 @@ var
   CellWidth, H, i: Integer;
   Font: TFont;
   V: TStrVector;
-  S: String;
+  S, BreakSymbol: String;
 begin
+  if HasGrid then  //в гриде требуется ставить разрыв при переносе строки
+    BreakSymbol:= SYMBOL_BREAK
+  else             //в файле не нужен разрыв при переносе для сохранения данных
+    BreakSymbol:= SYMBOL_SPACE;
+
   CellWidth:= ColsWidth(ACol1, ACol2);
   CellWidth:= WidthFromDefaultToScreen(CellWidth);
   Font:= TFont.Create;
-  Font.Name:= FFontName;
-  Font.Size:= Round(FFontSize);
-  Font.Style:= FontStyleSheetsToGraphics(FFontStyle);
+  try
+    Font.Name:= FFontName;
+    Font.Size:= Round(FFontSize);
+    Font.Style:= FontStyleSheetsToGraphics(FFontStyle);
 
-  V:= VStrToVector(AText, SYMBOL_BREAK);
-  if VIsNil(V) then // в тексте нет разрывов строк
-    Result:= TextToCell(AText, Font, CellWidth, ARedStrWidth,
-                      ADivideByHyphen, AWrapToWordParts, SYMBOL_SPACE {SYMBOL_BREAK})
-  else begin        //в тексте есть разрывы строк
-    Result:= 0;
-    AText:= EmptyStr;
-    for i:= 0 to High(V) do
-    begin
-      S:= STrim(V[i]);
-      H:= TextToCell(S, Font, CellWidth, ARedStrWidth,
-                     ADivideByHyphen, AWrapToWordParts, SYMBOL_SPACE {SYMBOL_BREAK});
-      if SEmpty(S) then continue;
-      if SEmpty(AText) then
-        AText:= S
-      else
-        AText:= AText + SYMBOL_BREAK + S;
-      Result:= Result + H;
+    V:= VStrToVector(AText, SYMBOL_BREAK);
+    if VIsNil(V) then // в тексте нет принудительных разрывов строк
+      Result:= TextToCell(AText, Font, CellWidth, ARedStrWidth,
+                        ADivideByHyphen, AWrapToWordParts, BreakSymbol)
+    else begin        //в тексте есть принудительные разрывы строк
+      Result:= 0;
+      AText:= EmptyStr;
+      for i:= 0 to High(V) do //работаем отдельно по каждой подстроке и возвращаем
+      begin                   //между ними эти разрывы, суммируем высоты
+        S:= STrim(V[i]);
+        H:= TextToCell(S, Font, CellWidth, ARedStrWidth,
+                       ADivideByHyphen, AWrapToWordParts, BreakSymbol);
+        if SEmpty(S) then continue;
+        if SEmpty(AText) then
+          AText:= S
+        else
+          AText:= AText + SYMBOL_BREAK + S;
+        Result:= Result + H;
+      end;
     end;
+    Result:= HeightFromScreenToDefault(Result);
+
+  finally
+    FreeAndNil(Font);
   end;
-  Result:= HeightFromScreenToDefault(Result);
-
-  FreeAndNil(Font);
-
-
-  //CellWidth:= ColsWidth(ACol1, ACol2);
-  //CellWidth:= WidthFromDefaultToScreen(CellWidth);
-  //Font:= TFont.Create;
-  //Font.Name:= FFontName;
-  //Font.Size:= Round(FFontSize);
-  //Font.Style:= FontStyleSheetsToGraphics(FFontStyle);
-  //Result:= TextToCell(AText, Font, CellWidth, ARedStrWidth,
-  //                    ADivideByHyphen, AWrapToWordParts, SYMBOL_BREAK);
-  //Result:= HeightFromScreenToDefault(Result);
-  //FreeAndNil(Font);
 end;
 
 procedure TSheetWriter.SetGridRowCount(const ACount: Integer);
