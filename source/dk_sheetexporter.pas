@@ -41,6 +41,13 @@ type
                    const ADefaultFileName: String = '';
                    const AOverwriteExistingFile: Boolean = False);
 
+    procedure PageMargins(const ATopMargin: Double=10;     //mm
+                           const ALeftMargin: Double=10;    //mm
+                           const ARightMargin: Double=10;   //mm
+                           const ABottomMargin: Double=10;  //mm
+                           const AFooterMargin: Double=0;   //mm
+                           const AHeaderMargin: Double=0);  //mm
+
     procedure PageSettings(const AOrient: TsPageOrientation = spoPortrait;
                            const APageFit: TPageFit = pfWidth;
                            const AShowHeaders: Boolean = True;
@@ -207,6 +214,22 @@ begin
                FileName, AOverwriteExistingFile);
 end;
 
+procedure SheetMargins(const ASheet: TsWorksheet;
+                       const ATopMargin: Double=10;     //mm
+                       const ALeftMargin: Double=10;    //mm
+                       const ARightMargin: Double=10;   //mm
+                       const ABottomMargin: Double=10;  //mm
+                       const AFooterMargin: Double=0;   //mm
+                       const AHeaderMargin: Double=0);
+begin
+  ASheet.PageLayout.TopMargin:= ATopMargin;
+  ASheet.PageLayout.LeftMargin:= ALeftMargin;
+  ASheet.PageLayout.RightMargin:= ARightMargin;
+  ASheet.PageLayout.BottomMargin:= ABottomMargin;
+  ASheet.PageLayout.HeaderMargin:= AHeaderMargin;
+  ASheet.PageLayout.FooterMargin:= AFooterMargin;
+end;
+
 procedure SheetPageSettings(const ASheet: TsWorksheet;
                        const AOrient: TsPageOrientation = spoPortrait;
                        const APageFit: TPageFit = pfWidth;
@@ -225,12 +248,10 @@ begin
   if AShowGridLines then
     ASheet.Options:= ASheet.Options + [soShowGridLines];
   ASheet.PageLayout.Orientation:= AOrient;
-  ASheet.PageLayout.TopMargin:= ATopMargin;
-  ASheet.PageLayout.LeftMargin:= ALeftMargin;
-  ASheet.PageLayout.RightMargin:= ARightMargin;
-  ASheet.PageLayout.BottomMargin:= ABottomMargin;
-  ASheet.PageLayout.HeaderMargin:= AHeaderMargin;
-  ASheet.PageLayout.FooterMargin:= AFooterMargin;
+
+  SheetMargins(ASheet, ATopMargin, ALeftMargin, ARightMargin, ABottomMargin,
+               AHeaderMargin, AFooterMargin);
+
   ASheet.PageLayout.Options:=
     ASheet.PageLayout.Options + [poFitPages, poHorCentered];
   case APageFit of
@@ -270,6 +291,17 @@ procedure TCustomExporter.Save(const ADoneMessage: String = '';
                    const AOverwriteExistingFile: Boolean = False);
 begin
   SaveWithDialog(FWorkbook, ADoneMessage, ADefaultFileName, AOverwriteExistingFile);
+end;
+
+procedure TCustomExporter.PageMargins(const ATopMargin: Double=10;     //mm
+                           const ALeftMargin: Double=10;    //mm
+                           const ARightMargin: Double=10;   //mm
+                           const ABottomMargin: Double=10;  //mm
+                           const AFooterMargin: Double=0;   //mm
+                           const AHeaderMargin: Double=0);  //mm
+begin
+  SheetMargins(FWorkBook.ActiveWorksheet, ATopMargin, ALeftMargin, ARightMargin,
+               ABottomMargin, AHeaderMargin, AFooterMargin);
 end;
 
 procedure TCustomExporter.PageSettings(const AOrient: TsPageOrientation = spoPortrait;
