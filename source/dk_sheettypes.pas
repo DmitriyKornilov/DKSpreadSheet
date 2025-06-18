@@ -57,6 +57,10 @@ type
 
     function GetShowFrozenLine: Boolean;
     procedure SetShowFrozenLine(AValue: Boolean);
+
+    procedure MouseWheel(Sender: TObject; Shift: TShiftState;
+                         WheelDelta: Integer; MousePos: TPoint;
+                         var Handled: Boolean);
   public
     constructor Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid;
                        const AFont: TFont; const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
@@ -175,6 +179,13 @@ begin
   Writer.ShowFrozenLine:= AValue;
 end;
 
+procedure TCustomSheet.MouseWheel(Sender: TObject; Shift: TShiftState;
+                         WheelDelta: Integer; MousePos: TPoint;
+                         var Handled: Boolean);
+begin
+  FWriter.Grid.Invalidate;
+end;
+
 constructor TCustomSheet.Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid;
                                 const AFont: TFont; const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
 begin
@@ -185,6 +196,8 @@ begin
     SetFontDefault;
   FColorIsNeed:= True;
   FWriter:= TSheetWriter.Create(SetWidths, AWorksheet, AGrid, ARowHeightDefault);
+  if Assigned(AGrid) then
+    FWriter.Grid.OnMouseWheel:= @MouseWheel;
 end;
 
 destructor TCustomSheet.Destroy;
