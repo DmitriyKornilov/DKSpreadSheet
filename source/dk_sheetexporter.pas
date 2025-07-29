@@ -108,7 +108,8 @@ type
     function BeginExport: Boolean;
     procedure EndExport(const ADoneMessage: String = '');
     procedure Save(const AFileName: String);
-    function AddWorksheet(const ASheetName: String): TsWorksheet;
+    function AddWorksheet(const ASheetName: String;
+                          const AInNewWorkbook: Boolean = True): TsWorksheet;
     procedure PageSettings(const AOrient: TsPageOrientation = spoPortrait;
                            const APageFit: TPageFit = pfWidth;
                            const AShowHeaders: Boolean = True;
@@ -276,6 +277,8 @@ procedure TCustomExporter.SaveToXLSX(const ADoneMessage: String = '';
                          const AFileName: String = '';
                          const AOverwriteExistingFile: Boolean = False);
 begin
+  if FWorkbook.GetWorksheetCount>0 then
+    FWorkbook.ActiveWorksheet:= FWorkbook.GetFirstWorksheet;
   SaveToFormat(FWorkbook, sfOOXML, ADoneMessage, AFileName, AOverwriteExistingFile);
 end;
 
@@ -283,13 +286,17 @@ procedure TCustomExporter.SaveToODS(const ADoneMessage: String = '';
                          const AFileName: String = '';
                          const AOverwriteExistingFile: Boolean = False);
 begin
-   SaveToFormat(FWorkbook, sfOpenDocument, ADoneMessage, AFileName, AOverwriteExistingFile);
+  if FWorkbook.GetWorksheetCount>0 then
+    FWorkbook.ActiveWorksheet:= FWorkbook.GetFirstWorksheet;
+  SaveToFormat(FWorkbook, sfOpenDocument, ADoneMessage, AFileName, AOverwriteExistingFile);
 end;
 
 procedure TCustomExporter.Save(const ADoneMessage: String = '';
                    const ADefaultFileName: String = '';
                    const AOverwriteExistingFile: Boolean = False);
 begin
+  if FWorkbook.GetWorksheetCount>0 then
+    FWorkbook.ActiveWorksheet:= FWorkbook.GetFirstWorksheet;
   SaveWithDialog(FWorkbook, ADoneMessage, ADefaultFileName, AOverwriteExistingFile);
 end;
 
@@ -417,16 +424,25 @@ var
   FullFileName: String;
 begin
   if not FCanExport then Exit;
-
+  if FWorkbook.GetWorksheetCount>0 then
+    FWorkbook.ActiveWorksheet:= FWorkbook.GetFirstWorksheet;
   FullFileName:= FFolderName + DirectorySeparator + AFileName + FFileExtension;
   SaveToFormat(FWorkbook, FFormat, EmptyStr, FullFileName, True);
 end;
 
-function TBooksExporter.AddWorksheet(const ASheetName: String): TsWorksheet;
+function TBooksExporter.AddWorksheet(const ASheetName: String;
+                                     const AInNewWorkbook: Boolean = True): TsWorksheet;
 begin
-  if Assigned(FWorkbook) then FreeAndNil(FWorkbook);
-  FWorkbook:= TsWorkbook.Create;
+  if AInNewWorkbook then
+  begin
+    if Assigned(FWorkbook) then
+      FreeAndNil(FWorkbook);
+  end;
+  if not Assigned(FWorkbook) then
+    FWorkbook:= TsWorkbook.Create;
   Result:= FWorkbook.AddWorksheet(TextToSheetName(ASheetName));
+  FWorkbook.ActiveWorksheet:= Result;
+  PageSettings;
 end;
 
 procedure TBooksExporter.PageSettings(const AOrient: TsPageOrientation = spoPortrait;
