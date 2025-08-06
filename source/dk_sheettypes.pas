@@ -5,7 +5,7 @@ unit DK_SheetTypes;
 interface
 
 uses
-  Classes, SysUtils, Graphics, fpstypes, fpspreadsheetgrid,
+  Classes, SysUtils, Graphics, Controls, lcltype, fpstypes, fpspreadsheetgrid,
   DK_SheetConst, DK_SheetUtils, DK_SheetWriter, DK_SheetExporter,
   DK_Vector, DK_Color;
 
@@ -58,9 +58,9 @@ type
     function GetShowFrozenLine: Boolean;
     procedure SetShowFrozenLine(AValue: Boolean);
 
-    procedure MouseWheel(Sender: TObject; Shift: TShiftState;
-                         WheelDelta: Integer; MousePos: TPoint;
-                         var Handled: Boolean);
+    procedure MouseWheel(Sender: TObject; {%H-}Shift: TShiftState;
+                         {%H-}WheelDelta: Integer; {%H-}MousePos: TPoint;
+                         var {%H-}Handled: Boolean);
   public
     constructor Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid;
                        const AFont: TFont; const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
@@ -91,6 +91,81 @@ type
     property Font: TFont read FFont write SetFont;
     property Writer: TSheetWriter read FWriter;
     property ShowFrozenLine: Boolean read GetShowFrozenLine write SetShowFrozenLine;
+  end;
+
+type
+
+  { TCustomSelectableSheet }
+
+  TCustomSelectableSheet = class(TCustomSheet)
+  private
+    FAutosizeColumnNumber: Integer;
+    FColumnWidthBeforeAutosize: Integer;
+    FColumnWidthWithoutAutosize: Integer;
+
+    FOnSelect: TSheetEvent;
+    FCanSelect: Boolean;
+    FCanUnselect: Boolean;
+
+    FOnReturnKeyDown: TSheetEvent;
+    FOnDelKeyDown: TSheetEvent;
+
+    procedure SetCanSelect(const AValue: Boolean);
+    procedure SetCanUnselect(const AValue: Boolean);
+
+    procedure ChangeBounds(Sender: TObject);
+    procedure MouseDown(Sender: TObject; Button: TMouseButton;
+                        {%H-}Shift: TShiftState; X, Y: Integer);
+    procedure KeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
+  protected
+    function IsCellSelectable(const {%H-}ARow, ACol: Integer): Boolean; virtual;
+    procedure SetSelection(const ARow, ACol: Integer); virtual; abstract;
+    procedure DelSelection; virtual; abstract;
+    function GetIsSelected: Boolean; virtual; abstract;
+    procedure SelectionMove(const ADelta: Integer); virtual; abstract;
+  public
+    constructor Create(const AWorksheet: TsWorksheet;
+                       const AGrid: TsWorksheetGrid;
+                       const AFont: TFont;
+                       const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
+
+    procedure AutosizeColumnEnable(const AColNumber: Integer);
+    procedure AutosizeColumnEnableLast;
+    procedure AutosizeColumnDisable;
+    procedure AutoSizeColumnWidth;
+
+    procedure Select(const ARow, ACol: Integer; const ADoEvent: Boolean = True);
+    procedure Unselect(const ADoEvent: Boolean = True);
+
+    property CanSelect: Boolean read FCanSelect write SetCanSelect;
+    property CanUnselect: Boolean read FCanUnselect write SetCanUnselect;
+    property IsSelected: Boolean read GetIsSelected;
+
+    property OnSelect: TSheetEvent read FOnSelect write FOnSelect;
+    property OnReturnKeyDown: TSheetEvent read FOnReturnKeyDown write FOnReturnKeyDown;
+    property OnDelKeyDown: TSheetEvent read FOnDelKeyDown write FOnDelKeyDown;
+  end;
+
+  { TSingleSelectableSheet }
+
+  TSingleSelectableSheet = class(TCustomSelectableSheet)
+  protected
+    FSelectedIndex: Integer;
+    FFirstRows: TIntVector;
+    FLastRows: TIntVector;
+
+    function IsCellSelectable(const ARow, ACol: Integer): Boolean; override;
+    function GetIsSelected: Boolean; override;
+    procedure SetSelection(const ARow, {%H-}ACol: Integer); override;
+    procedure DelSelection; override;
+    procedure SelectionMove(const ADelta: Integer); override;
+  public
+    constructor Create(const AWorksheet: TsWorksheet;
+                       const AGrid: TsWorksheetGrid;
+                       const AFont: TFont;
+                       const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
+
+    property SelectedIndex: Integer read FSelectedIndex;
   end;
 
   {correct saving sheet with zoom<>100%}
@@ -353,7 +428,201 @@ begin
     SelectionExtraDelCell(R[i], C[i]);
 end;
 
+{ TCustomSelectableSheet }
 
+procedure TCustomSelectableSheet.MouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  R, C: Integer;
+begin
+  if Button=mbLeft then
+  begin
+    (Sender as TsWorksheetGrid).MouseToCell(X, Y, C, R);
+    Select(R, C);
+  end
+  else if Button=mbRight then
+  begin
+    Unselect;
+  end;
+end;
+
+procedure TCustomSelectableSheet.KeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  case Key of
+    VK_UP: SelectionMove(-1);
+    VK_DOWN: SelectionMove(1);
+    VK_RETURN: if Assigned(FOnReturnKeyDown) then FOnReturnKeyDown;
+    VK_DELETE: if Assigned(FOnDelKeyDown) then FOnDelKeyDown;
+  end;
+end;
+
+function TCustomSelectableSheet.IsCellSelectable(const ARow, ACol: Integer): Boolean;
+begin
+  Result:= (ACol>=1) and (ACol<=Writer.ColCount);
+end;
+
+procedure TCustomSelectableSheet.Select(const ARow, ACol: Integer;
+  const ADoEvent: Boolean);
+begin
+  if not CanSelect then Exit;
+  if not IsCellSelectable(ARow, ACol) then Exit;
+
+  if IsSelected then DelSelection;
+  SetSelection(ARow, ACol);
+  if ADoEvent and Assigned(FOnSelect) then FOnSelect;
+end;
+
+procedure TCustomSelectableSheet.Unselect(const ADoEvent: Boolean);
+begin
+  if not IsSelected then Exit;
+  DelSelection;
+  if ADoEvent and Assigned(FOnSelect) then FOnSelect;
+end;
+
+procedure TCustomSelectableSheet.SetCanSelect(const AValue: Boolean);
+begin
+  if FCanSelect=AValue then Exit;
+  if not AValue then DelSelection;
+  FCanSelect:=AValue;
+end;
+
+procedure TCustomSelectableSheet.SetCanUnselect(const AValue: Boolean);
+begin
+  if FCanUnselect=AValue then Exit;
+  FCanUnselect:= AValue;
+end;
+
+procedure TCustomSelectableSheet.ChangeBounds(Sender: TObject);
+begin
+  AutoSizeColumnWidth;
+end;
+
+constructor TCustomSelectableSheet.Create(const AWorksheet: TsWorksheet;
+                       const AGrid: TsWorksheetGrid;
+                       const AFont: TFont;
+                       const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
+begin
+  inherited Create(AWorksheet, AGrid, AFont, ARowHeightDefault);
+
+  FAutosizeColumnNumber:= AUTOSIZE_NONE_COLUMN_NUMBER;
+  FOnSelect:= nil;
+  FCanSelect:= False;
+  FCanUnselect:= True;
+
+  if Assigned(AGrid) then
+  begin
+    Writer.Grid.OnMouseDown:= @MouseDown;
+    Writer.Grid.OnChangeBounds:= @ChangeBounds;
+    Writer.Grid.OnKeyDown:= @KeyDown;
+  end;
+end;
+
+procedure TCustomSelectableSheet.AutoSizeColumnWidth;
+var
+  W: Integer;
+begin
+  if not Writer.HasGrid then Exit;
+  if FAutosizeColumnNumber=AUTOSIZE_NONE_COLUMN_NUMBER then Exit;
+
+  W:= Writer.Grid.Width -
+      Writer.Grid.Scale96ToScreen(FColumnWidthWithoutAutosize+AUTOSIZE_ADDITION_WIDTH);
+  if W<0 then
+    W:= FColumnWidthBeforeAutosize
+  else
+    W:= Writer.Grid.ScaleScreenTo96(W);
+  Writer.SetColWidth(FAutosizeColumnNumber, W);
+end;
+
+procedure TCustomSelectableSheet.AutosizeColumnEnable(const AColNumber: Integer);
+begin
+  if not Writer.HasGrid then Exit;
+  if FAutosizeColumnNumber=AColNumber then Exit;
+  if ((AColNumber<1) and (AColNumber<>AUTOSIZE_LAST_COLUMN_NUMBER)) or
+     (AColNumber>Writer.ColCount) then Exit;
+
+  if AColNumber=AUTOSIZE_LAST_COLUMN_NUMBER then
+    FAutosizeColumnNumber:= Writer.ColCount
+  else
+    FAutosizeColumnNumber:= AColNumber;
+  FColumnWidthBeforeAutosize:= Writer.ColWidth[FAutosizeColumnNumber];
+  FColumnWidthWithoutAutosize:= Writer.ColsWidth(1, Writer.ColCount) -
+                                  FColumnWidthBeforeAutosize;
+
+  AutoSizeColumnWidth;
+end;
+
+procedure TCustomSelectableSheet.AutosizeColumnEnableLast;
+begin
+  AutosizeColumnEnable(AUTOSIZE_LAST_COLUMN_NUMBER);
+end;
+
+procedure TCustomSelectableSheet.AutosizeColumnDisable;
+var
+  ColNum: Integer;
+begin
+  if not Writer.HasGrid then Exit;
+  if FAutosizeColumnNumber= AUTOSIZE_NONE_COLUMN_NUMBER then Exit;
+
+  if FAutosizeColumnNumber=AUTOSIZE_LAST_COLUMN_NUMBER then
+     ColNum:= Writer.ColCount
+  else
+     ColNum:= FAutosizeColumnNumber;
+
+  Writer.SetColWidth(ColNum, FColumnWidthBeforeAutosize);
+  FAutosizeColumnNumber:= AUTOSIZE_NONE_COLUMN_NUMBER;
+end;
+
+{ TSingleSelectableSheet }
+
+function TSingleSelectableSheet.IsCellSelectable(const ARow, ACol: Integer): Boolean;
+begin
+  Result:= inherited IsCellSelectable(ARow, ACol) and
+           (VIndexOf(FFirstRows, FLastRows, ARow)>=0);
+end;
+
+function TSingleSelectableSheet.GetIsSelected: Boolean;
+begin
+  Result:= FSelectedIndex>=0;
+end;
+
+procedure TSingleSelectableSheet.SetSelection(const ARow, ACol: Integer);
+var
+  i, j, k: Integer;
+begin
+  k:= VIndexOf(FFirstRows, FLastRows, ARow);
+  FSelectedIndex:= k;
+  for i:= FFirstRows[k] to FLastRows[k] do
+    for j:= 1 to Writer.ColCount do
+      SelectionAddCell(i, j);
+end;
+
+procedure TSingleSelectableSheet.DelSelection;
+begin
+  FSelectedIndex:= -1;
+  SelectionClear;
+end;
+
+procedure TSingleSelectableSheet.SelectionMove(const ADelta: Integer);
+var
+  NewSelectedIndex: Integer;
+begin
+  if not IsSelected then Exit;
+  NewSelectedIndex:= SelectedIndex + ADelta;
+  if not CheckIndex(High(FFirstRows), NewSelectedIndex) then Exit;
+  Select(FFirstRows[NewSelectedIndex], 1);
+end;
+
+constructor TSingleSelectableSheet.Create(const AWorksheet: TsWorksheet;
+                       const AGrid: TsWorksheetGrid;
+                       const AFont: TFont;
+                       const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
+begin
+  inherited Create(AWorksheet, AGrid, AFont, ARowHeightDefault);
+  FSelectedIndex:= -1;
+  FFirstRows:= nil;
+  FLastRows:= nil;
+end;
 
 end.
 
