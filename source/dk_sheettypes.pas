@@ -165,6 +165,10 @@ type
                        const AFont: TFont;
                        const ARowHeightDefault: Integer = ROW_HEIGHT_DEFAULT);
 
+    function ReSelect(const AIDVector: TIntVector;
+                      const AIDValue: Integer;
+                      const AFirstRowSelectIfNotFound: Boolean = False): Boolean;
+
     property SelectedIndex: Integer read FSelectedIndex;
   end;
 
@@ -437,12 +441,16 @@ var
 begin
   if Button=mbLeft then
   begin
-    (Sender as TsWorksheetGrid).MouseToCell(X, Y, C, R);
-    Select(R, C);
+    if CanSelect then
+    begin
+      (Sender as TsWorksheetGrid).MouseToCell(X, Y, C, R);
+      Select(R, C);
+    end;
   end
   else if Button=mbRight then
   begin
-    Unselect;
+    if CanUnselect then
+      Unselect;
   end;
 end;
 
@@ -465,7 +473,6 @@ end;
 procedure TCustomSelectableSheet.Select(const ARow, ACol: Integer;
   const ADoEvent: Boolean);
 begin
-  if not CanSelect then Exit;
   if not IsCellSelectable(ARow, ACol) then Exit;
 
   if IsSelected then DelSelection;
@@ -483,7 +490,7 @@ end;
 procedure TCustomSelectableSheet.SetCanSelect(const AValue: Boolean);
 begin
   if FCanSelect=AValue then Exit;
-  if not AValue then DelSelection;
+  if not AValue then Unselect;
   FCanSelect:=AValue;
 end;
 
@@ -622,6 +629,34 @@ begin
   FSelectedIndex:= -1;
   FFirstRows:= nil;
   FLastRows:= nil;
+end;
+
+function TSingleSelectableSheet.ReSelect(const AIDVector: TIntVector;
+                                         const AIDValue: Integer;
+                                         const AFirstRowSelectIfNotFound: Boolean): Boolean;
+var
+  Index: Integer;
+begin
+  Result:= False;
+  if VIsNil(AIDVector) or VIsNil(FFirstRows) then Exit;
+
+  Index:= -1;
+  if AIDValue<=0 then
+  begin
+    if AFirstRowSelectIfNotFound then
+      Index:= 0;
+  end
+  else begin
+    Index:= VIndexOf(AIDVector, AIDValue);
+    if (Index<0) and AFirstRowSelectIfNotFound then
+      Index:= 0;
+  end;
+
+  if Index>=0 then
+  begin
+    Select(FFirstRows[Index], 1);
+    Result:= True;
+  end;
 end;
 
 end.
