@@ -172,32 +172,7 @@ type
     property SelectedIndex: Integer read FSelectedIndex;
   end;
 
-  {correct saving sheet with zoom<>100%}
-  procedure SheetFromGridSave(const ASheet: TCustomSheet;
-                   const AZoomPercent: Integer;
-                   const ADrawProc: TZoomEvent;
-                   const ASheetName: String = 'Лист1';
-                   const ADoneMessage: String = 'Выполнено!';
-                   const ALandscape: Boolean = False);
-
 implementation
-
-procedure SheetFromGridSave(const ASheet: TCustomSheet;
-                   const AZoomPercent: Integer;
-                   const ADrawProc: TZoomEvent;
-                   const ASheetName: String = 'Лист1';
-                   const ADoneMessage: String = 'Выполнено!';
-                   const ALandscape: Boolean = False);
-var
-  Percent: Integer;
-begin
-  Percent:= AZoomPercent;
-  if Percent<>100 then
-    ADrawProc(100);
-  ASheet.Save(ASheetName, ADoneMessage, ALandscape);
-  if Percent<>100 then
-    ADrawProc(Percent);
-end;
 
 { TCustomSheet }
 
