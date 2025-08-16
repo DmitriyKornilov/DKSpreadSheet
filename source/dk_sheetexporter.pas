@@ -19,7 +19,8 @@ type
   TsWorksheet       = fpspreadsheet.TsWorksheet;
   TsWorksheetGrid   = fpspreadsheetgrid.TsWorksheetGrid;
 
-  TPageFit = (pfOnePage, //всё на одной странице
+  TPageFit = (pfNone,
+              pfOnePage, //всё на одной странице
               pfWidth,   //заполнить по ширине 1 страницы (по высоте - сколько нужно, чтобы вместить все)
               pfHeight); //заполнить по высоте 1 страницы (по ширине - сколько нужно, чтобы вместить все)
 
@@ -252,6 +253,15 @@ begin
 
   SheetMargins(ASheet, ATopMargin, ALeftMargin, ARightMargin, ABottomMargin,
                AHeaderMargin, AFooterMargin);
+
+  if APageFit=pfNone then
+  begin
+    ASheet.PageLayout.Options:=
+      ASheet.PageLayout.Options - [poFitPages, poHorCentered];
+    ASheet.PageLayout.FitWidthToPages:= 0;
+    ASheet.PageLayout.FitHeightToPages:= 0;
+    Exit;
+  end;
 
   ASheet.PageLayout.Options:=
     ASheet.PageLayout.Options + [poFitPages, poHorCentered];

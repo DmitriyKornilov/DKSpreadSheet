@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Graphics, Controls, LCLType, fpsTypes, fpspreadsheetgrid,
   DK_Const, DK_Vector, DK_Matrix, DK_StrUtils,  DK_SheetWriter, DK_Color,
-  DK_SheetExporter, DK_SheetTypes, DK_SheetUtils, DK_SheetConst;
+  DK_SheetExporter, DK_SheetTypes, DK_SheetConst;
 
 type
   TSheetEvent = procedure of object;
