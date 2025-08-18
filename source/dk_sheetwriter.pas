@@ -92,7 +92,6 @@ type
     procedure SetGridRowCount(const ACount: Integer);
     procedure SetGridColCount(const ACount: Integer);
 
-    procedure SetDefaultGridSettings;
     procedure SetShowFrozenLine(const AValue: Boolean);
   public
     constructor Create(const AColWidths: TIntVector; const AWorksheet: TsWorksheet;
@@ -101,8 +100,9 @@ type
     destructor  Destroy; override;
     procedure Clear;
     procedure SetDefaultCellSettings;
+    procedure SetDefaultGridSettings;
     procedure BeginEdit;
-    procedure EndEdit;
+    procedure EndEdit(const AGoToLeftTopCell: Boolean=True);
     //Colors
     procedure AddCellBGColorIndex(const ARow, ACol, AColorIndex: Integer);
     procedure AddCellBGColorIndex(const ARow1, ACol1, ARow2, ACol2, AColorIndex: Integer);
@@ -279,15 +279,19 @@ begin
   SetColumns;
 end;
 
-procedure TSheetWriter.EndEdit;
+procedure TSheetWriter.EndEdit(const AGoToLeftTopCell: Boolean = True);
 begin
+  SetDefaultGridSettings;
   SetRows;
   SetColumns;
   if HasGrid then
   begin
     FGrid.AutoExpand:= [];
-    FGrid.LeftCol:= 0;
-    FGrid.TopRow:= 0;
+    if AGoToLeftTopCell then
+    begin
+      FGrid.LeftCol:= 0;
+      FGrid.TopRow:= 0;
+    end;
     FGrid.Visible:= True;
   end;
 end;

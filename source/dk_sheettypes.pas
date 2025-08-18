@@ -289,12 +289,15 @@ var
   Exporter: TSheetExporter;
 begin
   Exporter:= TSheetExporter.Create(Writer.Worksheet);
+  if Writer.HasGrid then
+    Writer.Grid.Visible:= False;
   try
     Exporter.SheetName:= ASheetName;
     if ALandscape then Exporter.PageSettings(spoLandscape);
     Exporter.Save(ADoneMessage);
   finally
     FreeAndNil(Exporter);
+    Writer.EndEdit(False);
   end;
 end;
 
