@@ -165,7 +165,11 @@ begin
   Result:= False;
   SD:= TSaveDialog.Create(nil);
   SD.FileName:= AFileName;
+  {$IFDEF LINUX}
+  SD.Filter:= 'Электронная таблица (*.ods)|*.ods|Электронная таблица (*.xlsx)|*.xlsx';
+  {$ELSE}
   SD.Filter:= 'Электронная таблица (*.xlsx)|*.xlsx|Электронная таблица (*.ods)|*.ods';
+  {$ENDIF}
   SD.Title:= 'Сохранить как';
   Result:= SD.Execute;
   if Result then
