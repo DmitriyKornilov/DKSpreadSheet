@@ -161,32 +161,32 @@ function OpenSaveDialog(var AFileName: String; out AFormat: TsSpreadsheetFormat)
 var
   SD: TSaveDialog;
   FileExtention: String;
+const
+  Formats: array of TsSpreadsheetFormat = (sfUser, sfOOXML, sfOpenDocument);
+  Filters: array of String = ('', 'Электронная таблица (*.xlsx)|*.xlsx', 'Электронная таблица (*.ods)|*.ods');
+  Extentions: array of String = ('', 'xlsx', 'ods');
+  {$IFDEF LINUX}
+  Indexes: array of Integer = (0, 2, 1);
+  {$ELSE}
+  Indexes: array of Integer = (0, 1, 2);
+  {$ENDIF}
 begin
   Result:= False;
   SD:= TSaveDialog.Create(nil);
-  SD.FileName:= AFileName;
-  {$IFDEF LINUX}
-  SD.Filter:= 'Электронная таблица (*.ods)|*.ods|Электронная таблица (*.xlsx)|*.xlsx';
-  {$ELSE}
-  SD.Filter:= 'Электронная таблица (*.xlsx)|*.xlsx|Электронная таблица (*.ods)|*.ods';
-  {$ENDIF}
-  SD.Title:= 'Сохранить как';
-  Result:= SD.Execute;
-  if Result then
-  begin
-    case SD.FilterIndex of
-    1: begin
-         AFormat:= sfOOXML;
-         FileExtention:= 'xlsx';
-       end;
-    2: begin
-         AFormat:= sfOpenDocument;
-         FileExtention:= 'ods';
-       end;
+  try
+    SD.FileName:= AFileName;
+    SD.Filter:= Filters[Indexes[1]] + '|' + Filters[Indexes[2]];
+    SD.Title:= 'Сохранить как';
+    Result:= SD.Execute;
+    if Result then
+    begin
+      AFormat:= Formats[Indexes[SD.FilterIndex]];
+      FileExtention:= Extentions[Indexes[SD.FilterIndex]];
+      AFileName:= SFileName(SD.FileName, FileExtention);
     end;
-    AFileName:= SFileName(SD.FileName, FileExtention);
+  finally
+    FreeAndNil(SD);
   end;
-  FreeAndNil(SD);
 end;
 
 procedure SaveToFormat(const AWorkbook: TsWorkbook;
