@@ -202,8 +202,12 @@ begin
     if FileExists(FileName) then
       if not Confirm('Файл "' + FileName +
                      '" уже существует! Перезаписать файл?') then Exit;
-  AWorkbook.WriteToFile(FileName, AFormat, True);
-  if ADoneMessage<>EmptyStr then Inform(ADoneMessage);
+  try
+    AWorkbook.WriteToFile(FileName, AFormat, True);
+    if ADoneMessage<>EmptyStr then Inform(ADoneMessage);
+  except
+    Error('Не удалось сохранить файл под указанным именем! Возможно, файл занят другим приложением.');
+  end;
 end;
 
 procedure SaveWithDialog(const AWorkbook: TsWorkbook;
