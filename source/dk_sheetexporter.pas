@@ -295,7 +295,7 @@ procedure TCustomExporter.SaveToXLSX(const ADoneMessage: String = '';
                          const AFileName: String = '';
                          const AOverwriteExistingFile: Boolean = False);
 begin
-  if FWorkbook.GetWorksheetCount>0 then
+  if FWorkbook.GetWorksheetCount>1 then
     FWorkbook.ActiveWorksheet:= FWorkbook.GetFirstWorksheet;
   SaveToFormat(FWorkbook, sfOOXML, ADoneMessage, AFileName, AOverwriteExistingFile);
 end;
@@ -304,7 +304,7 @@ procedure TCustomExporter.SaveToODS(const ADoneMessage: String = '';
                          const AFileName: String = '';
                          const AOverwriteExistingFile: Boolean = False);
 begin
-  if FWorkbook.GetWorksheetCount>0 then
+  if FWorkbook.GetWorksheetCount>1 then
     FWorkbook.ActiveWorksheet:= FWorkbook.GetFirstWorksheet;
   SaveToFormat(FWorkbook, sfOpenDocument, ADoneMessage, AFileName, AOverwriteExistingFile);
 end;
@@ -313,7 +313,7 @@ procedure TCustomExporter.Save(const ADoneMessage: String = '';
                    const ADefaultFileName: String = '';
                    const AOverwriteExistingFile: Boolean = False);
 begin
-  if FWorkbook.GetWorksheetCount>0 then
+  if FWorkbook.GetWorksheetCount>1 then
     FWorkbook.ActiveWorksheet:= FWorkbook.GetFirstWorksheet;
   SaveWithDialog(FWorkbook, ADoneMessage, ADefaultFileName, AOverwriteExistingFile);
 end;
@@ -442,7 +442,7 @@ var
   FullFileName: String;
 begin
   if not FCanExport then Exit;
-  if FWorkbook.GetWorksheetCount>0 then
+  if FWorkbook.GetWorksheetCount>1 then
     FWorkbook.ActiveWorksheet:= FWorkbook.GetFirstWorksheet;
   FullFileName:= FFolderName + DirectorySeparator + AFileName + FFileExtension;
   SaveToFormat(FWorkbook, FFormat, EmptyStr, FullFileName, True);
