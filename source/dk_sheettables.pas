@@ -72,6 +72,9 @@ type
 
     procedure MouseDown(Sender: TObject; Button: TMouseButton;
       {%H-}Shift: TShiftState; X, Y: Integer);
+    procedure MouseWheel(Sender: TObject; {%H-}Shift: TShiftState;
+                         {%H-}WheelDelta: Integer; {%H-}MousePos: TPoint;
+                         var {%H-}Handled: Boolean);
   protected
     FOnSelect: TSheetEvent;
 
@@ -385,6 +388,12 @@ begin
       Unselect;
 end;
 
+procedure TSheetTable.MouseWheel(Sender: TObject; Shift: TShiftState;
+  WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
+begin
+  FGrid.Invalidate;
+end;
+
 procedure TSheetTable.SetColumnVisibles;
 var
   i: Integer;
@@ -606,6 +615,7 @@ constructor TSheetTable.Create(const AGrid: TsWorksheetGrid);
 begin
   FGrid:= AGrid;
   FGrid.OnMouseDown:= @MouseDown;
+  FGrid.OnMouseWheel:= @MouseWheel;
 
   FHeaderFont:= TFont.Create;
   FValuesFont:= TFont.Create;
