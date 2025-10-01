@@ -237,7 +237,7 @@ procedure TCustomSheet.MouseWheel(Sender: TObject; Shift: TShiftState;
                          WheelDelta: Integer; MousePos: TPoint;
                          var Handled: Boolean);
 begin
-  FWriter.Grid.Invalidate;
+  (Sender as TsWorksheetGrid).Invalidate;
 end;
 
 constructor TCustomSheet.Create(const AWorksheet: TsWorksheet; const AGrid: TsWorksheetGrid;

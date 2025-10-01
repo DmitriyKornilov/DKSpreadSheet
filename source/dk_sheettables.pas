@@ -391,7 +391,7 @@ end;
 procedure TSheetTable.MouseWheel(Sender: TObject; Shift: TShiftState;
   WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
 begin
-  FGrid.Invalidate;
+  (Sender as TsWorksheetGrid).Invalidate;
 end;
 
 procedure TSheetTable.SetColumnVisibles;
