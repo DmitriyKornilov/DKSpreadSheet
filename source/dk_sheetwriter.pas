@@ -82,6 +82,9 @@ type
     procedure SetWidth(const ACol, AValue: Integer);
     procedure SetHeight(const ARow, AValue: Integer);
 
+    procedure SetColWidth(ACol, AValue: Integer);
+    procedure SetRowHeight(ARow, AValue: Integer);
+
     procedure SetLineHeight(const ARow, AHeight: Integer; const AMinValue: Integer);
     procedure SetNewRowHeight(const ARow, AHeight: Integer; const AMinValue: Integer);
 
@@ -146,8 +149,6 @@ type
     procedure SetZoom(const APercents: Integer);
     function ApplyZoom(const AValue: Integer): Integer;
     //Sizes
-    procedure SetColWidth(ACol, AValue: Integer);
-    procedure SetRowHeight(ARow, AValue: Integer);
     procedure SetColumns;
     procedure SetRows;
     //Frozen
@@ -244,8 +245,8 @@ type
     function TotalColsWidth: Integer;
     function RowsHeight(const ARow1, ARow2: Integer): Integer;
     function ColsWidth(const ACol1, ACol2: Integer): Integer;
-    property RowHeight[const ARow: Integer]: Integer read GetRowHeight;
-    property ColWidth[const ACol: Integer]: Integer read GetColWidth;
+    property RowHeight[const ARow: Integer{from 1}]: Integer read GetRowHeight write SetRowHeight;
+    property ColWidth[const ACol: Integer{from 1}]: Integer read GetColWidth write SetColWidth;
     property RowHeightDefault: Integer read FRowHeightDefault;
 
     property WorkSheet: TsWorkSheet read FWorkSheet;

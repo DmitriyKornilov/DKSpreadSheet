@@ -516,7 +516,7 @@ begin
     W:= FColumnWidthBeforeAutosize
   else
     W:= Writer.Grid.ScaleScreenTo96(W);
-  Writer.SetColWidth(FAutosizeColumnNumber, W);
+  Writer.ColWidth[FAutosizeColumnNumber]:= W;
 end;
 
 procedure TCustomSelectableSheet.AutosizeColumnEnable(const AColNumber: Integer);
@@ -554,7 +554,7 @@ begin
   else
      ColNum:= FAutosizeColumnNumber;
 
-  Writer.SetColWidth(ColNum, FColumnWidthBeforeAutosize);
+  Writer.ColWidth[ColNum]:= FColumnWidthBeforeAutosize;
   FAutosizeColumnNumber:= AUTOSIZE_NONE_COLUMN_NUMBER;
 end;
 
