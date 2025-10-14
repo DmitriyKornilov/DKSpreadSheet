@@ -19,6 +19,30 @@ const
   vaBottom  = fpsTypes.vaBottom;
   vaDefault = fpsTypes.vaDefault;
 
+  spoPortrait  = fpsTypes.spoPortrait;
+  spoLandscape = fpsTypes.spoLandscape;
+
+  nfGeneral       = fpsTypes.nfGeneral;
+  nfFixed         = fpsTypes.nfFixed;
+  nfFixedTh       = fpsTypes.nfFixedTh;
+  nfExp           = fpsTypes.nfExp;
+  nfPercentage    = fpsTypes.nfPercentage;
+  nfFraction      = fpsTypes.nfFraction;
+  nfCurrency      = fpsTypes.nfCurrency;
+  nfCurrencyRed   = fpsTypes.nfCurrencyRed;
+  nfShortDateTime = fpsTypes.nfShortDateTime;
+  nfShortDate     = fpsTypes.nfShortDate;
+  nfLongDate      = fpsTypes.nfLongDate;
+  nfShortTime     = fpsTypes.nfShortTime;
+  nfLongTime      = fpsTypes.nfLongTime;
+  nfShortTimeAM   = fpsTypes.nfShortTimeAM;
+  nfLongTimeAM    = fpsTypes.nfLongTimeAM;
+  nfDayMonth      = fpsTypes.nfDayMonth;
+  nfMonthYear     = fpsTypes.nfMonthYear;
+  nfTimeInterval  = fpsTypes.nfTimeInterval;
+  nfText          = fpsTypes.nfText;
+  nfCustom        = fpsTypes.nfCustom;
+
   cbtNone   = DK_SheetWriter.cbtNone;
   cbtLeft   = DK_SheetWriter.cbtLeft;
   cbtRight  = DK_SheetWriter.cbtRight;
@@ -27,6 +51,11 @@ const
   cbtOuter  = DK_SheetWriter.cbtOuter;
   cbtInner  = DK_SheetWriter.cbtInner;
   cbtAll    = DK_SheetWriter.cbtAll;
+
+  pfNone    = DK_SheetExporter.pfNone;
+  pfOnePage = DK_SheetExporter.pfOnePage;
+  pfWidth   = DK_SheetExporter.pfWidth;
+  pfHeight  = DK_SheetExporter.pfHeight;
 
 type
   TCellBorderType = DK_SheetWriter.TCellBorderType;
@@ -72,7 +101,16 @@ type
     procedure SetFontDefault;
     procedure Save(const ASheetName: String = 'Лист1';
                    const ADoneMessage: String = 'Выполнено!';
-                   const ALandscape: Boolean = False);
+                   const AOrient: TsPageOrientation = spoPortrait;
+                   const APageFit: TPageFit = pfWidth;
+                   const AShowHeaders: Boolean = True;
+                   const AShowGridLines: Boolean = True;
+                   const ATopMargin: Double=10;     //mm
+                   const ALeftMargin: Double=10;    //mm
+                   const ARightMargin: Double=10;   //mm
+                   const ABottomMargin: Double=10;  //mm
+                   const AFooterMargin: Double=0;   //mm
+                   const AHeaderMargin: Double=0);
 
     procedure BordersDraw(const ARow1: Integer = 0; const ARow2: Integer = 0;
                           const ACol1: Integer = 0; const ACol2: Integer = 0);
@@ -284,7 +322,16 @@ end;
 
 procedure TCustomSheet.Save(const ASheetName: String = 'Лист1';
                    const ADoneMessage: String = 'Выполнено!';
-                   const ALandscape: Boolean = False);
+                   const AOrient: TsPageOrientation = spoPortrait;
+                   const APageFit: TPageFit = pfWidth;
+                   const AShowHeaders: Boolean = True;
+                   const AShowGridLines: Boolean = True;
+                   const ATopMargin: Double=10;     //mm
+                   const ALeftMargin: Double=10;    //mm
+                   const ARightMargin: Double=10;   //mm
+                   const ABottomMargin: Double=10;  //mm
+                   const AFooterMargin: Double=0;   //mm
+                   const AHeaderMargin: Double=0);
 var
   Exporter: TSheetExporter;
 begin
@@ -293,7 +340,9 @@ begin
     Writer.Grid.Visible:= False;
   try
     Exporter.SheetName:= ASheetName;
-    if ALandscape then Exporter.PageSettings(spoLandscape);
+    Exporter.PageSettings(AOrient, APageFit, AShowHeaders, AShowGridLines,
+                          ATopMargin, ALeftMargin, ARightMargin, ABottomMargin,
+                          AFooterMargin, AHeaderMargin);
     Exporter.Save(ADoneMessage);
   finally
     FreeAndNil(Exporter);
