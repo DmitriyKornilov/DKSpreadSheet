@@ -856,9 +856,9 @@ var
   V: TStrVector;
   S, BreakSymbol: String;
 begin
-  if HasGrid then  //в гриде требуется ставить разрыв при переносе строки
-    BreakSymbol:= SYMBOL_BREAK
-  else             //в файле не нужен разрыв при переносе для сохранения данных
+  //if HasGrid then  //в гриде требуется ставить разрыв при переносе строки
+  //  BreakSymbol:= SYMBOL_BREAK
+  //else             //в файле не нужен разрыв при переносе для сохранения данных
     BreakSymbol:= SYMBOL_SPACE;
 
   CellWidth:= ColsWidth(ACol1, ACol2);
