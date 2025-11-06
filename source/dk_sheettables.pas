@@ -10,7 +10,6 @@ uses
   DK_SheetExporter, DK_SheetTypes, DK_SheetConst;
 
 type
-  TSheetEvent = procedure of object;
 
   TSheetColumnType = (
     ctUndefined,
