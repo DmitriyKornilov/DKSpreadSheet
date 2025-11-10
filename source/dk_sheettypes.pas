@@ -145,6 +145,7 @@ type
     FCanSelect: Boolean;
     FCanUnselect: Boolean;
 
+    FOnDblClick: TSheetEvent;
     FOnReturnKeyDown: TSheetEvent;
     FOnDelKeyDown: TSheetEvent;
 
@@ -155,6 +156,7 @@ type
     procedure MouseDown(Sender: TObject; Button: TMouseButton;
                         {%H-}Shift: TShiftState; X, Y: Integer);
     procedure KeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
+    procedure DblClick(Sender: TObject);
   protected
     function IsCellSelectable(const {%H-}ARow, ACol: Integer): Boolean; virtual;
     procedure SetSelection(const ARow, ACol: Integer); virtual; abstract;
@@ -182,6 +184,7 @@ type
     property OnSelect: TSheetEvent read FOnSelect write FOnSelect;
     property OnReturnKeyDown: TSheetEvent read FOnReturnKeyDown write FOnReturnKeyDown;
     property OnDelKeyDown: TSheetEvent read FOnDelKeyDown write FOnDelKeyDown;
+    property OnDblClick: TSheetEvent read FOnDblClick write FOnDblClick;
   end;
 
   { TSingleSelectableSheet }
@@ -492,6 +495,13 @@ begin
   end;
 end;
 
+procedure TCustomSelectableSheet.DblClick(Sender: TObject);
+begin
+  if not IsCellSelectable((Sender as TsWorksheetGrid).Row,
+                          (Sender as TsWorksheetGrid).Col) then Exit;
+  if Assigned(FOnDblClick) then FOnDblClick;
+end;
+
 function TCustomSelectableSheet.IsCellSelectable(const ARow, ACol: Integer): Boolean;
 begin
   Result:= (ACol>=1) and (ACol<=Writer.ColCount);
@@ -549,6 +559,7 @@ begin
     Writer.Grid.OnMouseDown:= @MouseDown;
     Writer.Grid.OnChangeBounds:= @ChangeBounds;
     Writer.Grid.OnKeyDown:= @KeyDown;
+    Writer.Grid.OnDblClick:= @DblClick;
   end;
 end;
 
